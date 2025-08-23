@@ -520,6 +520,73 @@
     align-items: stretch;
   }
 }
+/* ===== Zoom-Out فقط على الشاشات الصغيرة (بدون تغيير محتوى الورقة) ===== */
+
+/* مقياس الزوم */
+:root { --paper-scale: 1; }
+@media (max-width: 1024px){ :root { --paper-scale: .9; } }
+@media (max-width: 768px) { :root { --paper-scale: .8; } }
+@media (max-width: 600px) { :root { --paper-scale: .7; } }
+@media (max-width: 480px) { :root { --paper-scale: .6; } }
+
+/* طبّق الزوم على الورقة نفسها */
+.a4{
+  transform: scale(var(--paper-scale)) !important;
+  transform-origin: top center !important;
+  width: 210mm !important;     /* نحافظ على أبعاد الـ A4 */
+  min-height: 297mm !important;
+}
+
+/* نتأكد أن منطقة المعاينة تسمح بالتمرير */
+.preview{
+  overflow: auto !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+}
+
+/* ===== إلغاء تغييرات الموبايل السابقة داخل الورقة حتى لا تتصاغر مرتين ===== */
+@media (max-width: 768px){
+  /* رجّع الأحجام الأصلية داخل الورقة */
+  .cv{ font-size: var(--base-font) !important; }
+  .avatar{
+    width: 96px !important; height: 96px !important;
+    min-width: 96px !important; min-height: 96px !important;
+  }
+  .name{ font-size: var(--name-font) !important; }
+  .role{ font-size: inherit !important; }
+  h3{ font-size: var(--h3-font) !important; margin-bottom: 0 !important; }
+
+  /* رجّع شبكة الأقسام لتصرّف الديسكتوب (من غير تقليل للأعمدة) */
+  .grid-layout{
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 480px){
+  .cv{ font-size: var(--base-font) !important; }
+  .name{ font-size: var(--name-font) !important; }
+  h3{ font-size: var(--h3-font) !important; }
+  .grid-layout{
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+/* مهم: لو كانت الشبكة تظهر من الوسط، ثبّت الاتجاه والمحاذاة من اليمين */
+.grid-layout{
+  direction: rtl;
+  justify-content: stretch;
+  align-content: start;
+  justify-items: stretch;
+  align-items: stretch;
+  grid-auto-flow: row dense;
+}
+.grid-layout > *{
+  min-width: 0;            /* يمنع العناصر من كسر الأعمدة */
+  box-sizing: border-box;
+  overflow-wrap: anywhere; word-break: break-word;
+}
 
     </style>
     <script>
