@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منشئ السيرة الذاتية المتقدم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1d4ed8;
+            --text: #000000;
+            --heading: #0f172a;
+            --divider: #e5e7eb;
+            --divider-w: 1px;
+            --avatar-border: conic-gradient(#4f46e5, #22c55e, #06b6d4, #4f46e5);
+            
+            /* ألوان الخطوط */
+            --name-color: #ffffff;
+            --heading-color: #ffffff;
+            --text-color: #000000;
+            --secondary-text-color: #666666;
+            
+            --base-font: 14px;
+            --h1-font: 28px;
+            --h2-font: 22px;
+            --h3-font: 18px;
+            --h4-font: 16px;
+            --name-font: 28px;
+            --section-gap: 18px;
+            --item-gap: 8px;
+            --aside-w: 280px;
+            --grid-min: 180px;
+            --card-min-h: 84px;
+            --card-pad: 12px;
+            
+            --card-radius: 12px;
+            --shadow-size: 8px;
+            --card-border: 0px solid #e5e7eb;
+            
+            --font-body: "Cairo", "Tajawal", "Noto Sans Arabic", "Amiri", sans-serif;
+            --font-head: "Cairo", "Tajawal", "Noto Sans Arabic", "Amiri", sans-serif;
+            --font-name: "Tajawal", "Cairo", "Noto Sans Arabic", "Amiri", sans-serif;
+
+            /* متغيرات للأشكال لتكون متجاوبة */
+            --gauge-size: 50px;
+            --bar-width: 120px;
+            --stars-width: 100px;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-body);
+            background-color: #0b1020;
+            color: #e5e7eb;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 390px 1fr;
+        }
+        
+        /* لوحة التحكم */
+        .controls {
+            background: #0f172a;
+            border-inline-end: 1px solid #1f2937;
+            padding: 10px;
+            overflow-y: auto;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+        
+        .controls-section {
+            background: #0b1222;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            padding: 12px 14px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f172a;
+        }
+        
+        .section-content {
+            padding: 0 12px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+        .stack { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        label.small { font-size: 13px; opacity: .9; }
+        
+        input[type="text"], input[type="number"], input[type="file"], input[type="range"], input[type="color"], textarea, select {
+            width: 100%;
+            background: #0b1529;
+            color: #e5e7eb;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 8px 10px;
+            outline: none;
+        }
+        input[type="color"] { width: 40px; height: 30px; padding: 0; border: none; cursor: pointer; }
+        input[type="range"] { padding: 0; }
+        textarea { min-height: 70px; }
+        
+        .btn { background: #22c55e; color: #052e16; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: all 0.3s ease; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn.ghost { background: transparent; border: 1px solid #1f2937; color: #cfe3ff; }
+        .btn.dan { background: #ef4444; color: #2b0b0b; }
+        
+        .list { display: flex; flex-direction: column; gap: 8px; }
+        .chip { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #0b1529; border: 1px solid #1f2937; padding: 8px 10px; border-radius: 10px; cursor: move; }
+        .chip .drag-handle { cursor: grab; color: #9ca3af; margin-left: 5px; }
+        .chip .drag-handle:active { cursor: grabbing; }
+        
+        .section-controls { display: flex; align-items: center; gap: 10px; }
+        .section-controls select { background: #1f2937; color: #cfe3ff; border: 1px solid #374151; border-radius: 6px; padding: 4px 8px; font-size: 12px; min-width: 100px; }
+        .section-controls label { font-size: 12px; color: #cfe3ff; display: flex; align-items: center; gap: 4px; }
+        
+        .toolbar { position: sticky; bottom: 0; background: #0f172a; padding: 8px; border-top: 1px solid #1f2937; z-index: 2; }
+        
+        /* تحكم الألوان */
+        .color-palettes { display: flex; flex-direction: column; gap: 10px; }
+        .palette-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .palette { cursor: pointer; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.3s ease; }
+        .palette:hover { transform: scale(1.05); }
+        .palette .colors { display: flex; height: 20px; }
+        .palette .name { font-size: 11px; text-align: center; padding: 3px; background: #0b1529; }
+        
+        .color-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .color-control { display: flex; align-items: center; gap: 8px; }
+        
+        /* تحكم الأشكال والأحجام */
+        .size-controls { display: flex; flex-direction: column; gap: 15px; }
+        .slider-with-preview { display: flex; flex-direction: column; gap: 8px; }
+        .slider-control { display: flex; align-items: center; gap: 10px; }
+        .slider-control input[type="range"] { flex: 1; }
+        .slider-control .value { min-width: 40px; text-align: center; font-size: 12px; background: #1f2937; padding: 4px 8px; border-radius: 6px; }
+        
+        /* المعاينة */
+        .preview { padding: 16px; display: flex; justify-content: center; align-items: flex-start; overflow: auto; }
+        .a4-container { width: 100%; display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
+        
+        .a4 {
+            width: 210mm;
+            min-height: 297mm;
+            background: #fff;
+            color: var(--text);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.45);
+            overflow: hidden;
+            position: relative;
+            transform-origin: top center;
+            transition: transform 0.3s ease;
+        }
+        
+        .cv {
+            display: grid;
+            grid-template-columns: var(--aside-w) var(--divider-w) 1fr;
+            min-height: 297mm; /* A4 height */
+            height: 100%;
+            font-size: var(--base-font);
+            font-family: var(--font-body);
+        }
+        
+        .aside {
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #eef2ff;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--section-gap);
+            min-height: 297mm; /* A4 height */
+            height: 100%;
+        }
+        
+        .divider { background: var(--divider); }
+        
+        .main { padding: 24px 28px; display: flex; flex-direction: column; gap: var(--section-gap); }
+        
+        .row-top { display: flex; align-items: center; gap: 12px; }
+        
+        .avatar {
+            width: 96px;
+            height: 96px;
+            min-width: 96px;
+            min-height: 96px;
+            border-radius: 50%;
+            background: var(--avatar-border);
+            padding: 3px;
+            flex: 0 0 auto;
+        }
+        .avatar > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; background: #0b1222; }
+        
+        .title-box { min-width: 0; flex: 1 1 auto; }
+        
+        .name {
+            font-weight: 900;
+            line-height: 1.2;
+            font-size: var(--name-font);
+            color: var(--name-color);
+            word-break: break-word;
+            font-family: var(--font-name);
+        }
+        .role { opacity: .95; margin-top: 4px; color: var(--secondary-text-color); }
+        
+        .section { display: flex; flex-direction: column; gap: var(--item-gap); }
+        .section h3 { margin: 0; color: var(--heading-color); font-size: var(--h3-font); font-family: var(--font-head); }
+        
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #1f2937;
+            font-weight: 800;
+            font-size: 12px;
+            cursor: move;
+            margin: 2px;
+        }
+        
+        .kv {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: var(--item-gap) 10px;
+            font-size: calc(var(--base-font)*.95);
+        }
+        
+        .summary {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            padding: var(--card-pad);
+            border-radius: var(--card-radius);
+        }
+
+        /* صور و SVG داخل الورقة مرنة */
+        .a4 img, .a4 svg { max-width: 100%; height: auto; }
+        /* تجاوز أي font-size/line-height inline ليصبح متجاوب */
+        .a4 [style*="font-size"] { font-size: inherit !important; }
+        .a4 [style*="line-height"] { line-height: inherit !important; }
+        
+        /* مهارات */
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--grid-min), 1fr));
+            gap: var(--item-gap);
+            align-items: start;
+        }
+        
+        .skill {
+            background: #ffffff;
+            border-radius: var(--card-radius);
+            padding: var(--card-pad);
+            box-shadow: 0 4px var(--shadow-size) rgba(2,6,23,.08);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            min-height: var(--card-min-h);
+            border: var(--card-border);
+        }
+        
+        .skill .label {
+            font-weight: 800;
+            font-size: 13px;
+            color: #000000;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            text-align: right;
+            flex: 1;
+            margin-right: 8px;
+        }
+        
+        .gauge-container {
+            width: var(--gauge-size);
+            height: var(--gauge-size);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .gauge svg { width: 100%; height: 100%; }
+        .g-bg { stroke: #e5e7eb; fill: none; }
+        .g-ring { fill: none; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+        .g-center { font-size: calc(var(--base-font) * .9); font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: var(--text-color); }
+        
+        .bar { width: var(--bar-width); height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+        .bar span { display: block; height: 100%; border-radius: 4px; background: var(--skill-color, var(--secondary)); }
+        
+        .stars { color: var(--skill-color, gold); font-size: 14px; width: var(--stars-width); text-align: center; flex-shrink: 0; }
+        
+        /* عرض شبكي للخبرات والتعليم والبيانات الإضافية */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            align-items: start;
+            width: 100%;
+        }
+        
+        /* للشاشات الكبيرة - 3-4 عناصر في الصف */
+        @media (min-width: 900px) {
+            .grid-layout { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        }
+        @media (min-width: 1200px) {
+            .grid-layout { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        }
+        
+        .experience-item, .education-item, .extra-data-item {
+            background: #f8fafc;
+            border: var(--card-border);
+            border-radius: var(--card-radius);
+            padding: var(--card-pad);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: auto;       /* يسمح بالانكماش */
+            max-width: 100%;   /* يمنع التمدد الزائد */
+            min-width: 0;      /* مهم جدًا للانكماش داخل الأعمدة */
+            box-sizing: border-box;
+        }
+        .experience-item:hover, .education-item:hover, .extra-data-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        /* تحسين العرض الشبكي على الشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .grid-layout { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
+        @media (max-width: 480px) {
+            .grid-layout {
+                grid-template-columns: repeat(4, 1fr); /* ٤ أعمدة على الجوال الصغير */
+                gap: 8px;
+            }
+            .grid-layout > * { min-width: 0; }
+        }
+        
+        /* نافذة الدفع (مخفيّة افتراضيًا) */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: none; /* مخفية */
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal:not(.hidden),
+        .modal.open,
+        .modal.active,
+        .modal[aria-hidden="false"] { display: flex; } /* تظهر فقط عند التصدير */
+        .modal.hidden { display: none; }
+        
+        .modal-content {
+            background: #fff;
+            color: #111;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 420px;
+            width: 92%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            line-height: 1.7;
+        }
+        .modal-actions { display: flex; justify-content: space-around; gap: 10px; margin-top: 18px; }
+        
+        /* تفاصيل قابلة للطي */
+        details {
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            margin: 8px 0;
+            background: #0b1222;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        details[open] { background: #0f172a; }
+        summary {
+            cursor: pointer;
+            padding: 12px 14px;
+            font-weight: 800;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f172a;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        summary:hover { background: #1f2937; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '▼'; font-size: 12px; transition: transform 0.3s ease; color: #9ca3af; }
+        details[open] summary::after { transform: rotate(180deg); }
+        
+        /* السحب والإفلات */
+        .sortable-ghost { opacity: 0.8; background: rgba(29, 78, 216, 0.2); border: 2px dashed #1d4ed8; }
+        .sortable-chosen { opacity: 1; transform: scale(1.02); }
+        .sortable-drag { opacity: 0.9; transform: rotate(2deg); }
+        
+        /* عرض الجوال */
+        @media (max-width: 768px) {
+            body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .controls { height: auto; max-height: 50vh; position: relative; }
+            .preview { height: auto; min-height: 50vh; position: relative; background: #1f2937; padding: 20px 10px; }
+            .a4 { width: 100%; height: auto; min-height: 0; transform: none; box-shadow: 0 5px 15px rgba(0,0,0,.3); }
+            
+            .cv { grid-template-columns: 35% 1px 1fr; min-height: 0; font-size: 12px; }
+            .aside { padding: 15px 10px; min-height: 0; }
+            .main { padding: 15px; }
+            
+            .avatar { width: 60px; height: 60px; min-width: 60px; min-height: 60px; }
+            .name { font-size: 1.5em; }
+            .role { font-size: 1em; }
+            h3 { font-size: 1.2em; margin-bottom: 8px; }
+
+            /* تصغير القيم العامة للأقسام والعناصر */
+            :root {
+                --base-font: 13px;
+                --h3-font: 16px;
+                --name-font: 22px;
+                --grid-min: 140px;
+                --card-min-h: 72px;
+                --card-pad: 10px;
+                --gauge-size: 42px;
+                --bar-width: 100px;
+                --stars-width: 84px;
+            }
+        }
+        
+        /* عرض الجوال الصغير جداً */
+        @media (max-width: 480px) {
+            .cv { grid-template-columns: 1fr; }
+            .aside { min-height: 0; padding-bottom: 20px; }
+            .divider { display: none; }
+            .name { font-size: 1.3em; }
+            h3 { font-size: 1.1em; }
+
+            /* إجبار ٤ أعمدة للأقسام الشبكية */
+            .grid-layout { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .grid-layout > * { min-width: 0; }
+
+            /* مزيد تصغير للأحجام */
+            :root {
+                --base-font: 12px;
+                --h3-font: 14.5px;
+                --name-font: 19px;
+                --grid-min: 110px;
+                --card-min-h: 60px;
+                --card-pad: 6px;
+                --gauge-size: 36px;
+                --bar-width: 88px;
+                --stars-width: 72px;
+            }
+        }
+/* ===== إصلاح اتجاه ومحاذاة الشبكة ===== */
+.grid-layout{
+  direction: rtl;                /* يبدأ من اليمين */
+  width: 100%;
+  margin: 0;                     /* منع أي تمركز بسبب هوامش */
+  justify-content: stretch;      /* لا يتمركز المحتوى */
+  align-content: start;
+  justify-items: stretch;
+  align-items: stretch;
+  grid-auto-flow: row dense;     /* تعبئة ذكية للفراغات */
+}
+
+/* البطاقات: قابلة للانكماش داخل الأعمدة وتملأ مساحتها */
+.grid-layout > *,
+.experience-item, .education-item, .extra-data-item{
+  min-width: 0 !important;       /* أهم سطر لعدم تفجير العمود */
+  width: 100%;                   /* تملأ الخانة بالكامل */
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;       /* منع تمدد الكلمات الطويلة */
+  word-break: break-word;
+}
+
+/* ===== إجبار ٤ أعمدة على الشاشات الصغيرة جدًا ===== */
+@media (max-width: 480px){
+  .grid-layout{
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important; /* ٤ أعمدة أكيد */
+    gap: 6px !important;                                         /* تقليل الفجوة يساعد */
+  }
+
+  /* تصغير البطاقات قليلًا لتستوعب ٤ أعمدة */
+  .experience-item, .education-item, .extra-data-item{
+    padding: 6px !important;
+  }
+}
+
+/* ===== حالة: لو ما عندك .grid-layout والبطاقات داخل .section مباشرة ===== */
+@media (max-width: 480px){
+  .a4 .section:has(.experience-item),
+  .a4 .section:has(.education-item),
+  .a4 .section:has(.extra-data-item){
+    direction: rtl;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    justify-content: stretch;
+    align-content: start;
+    justify-items: stretch;
+    align-items: stretch;
+  }
+}
+
+    </style>
+    <script>
+        // التأكد من تحميل مكتبة jsPDF
+        window.jspdf = window.jspdf || {};
+        if (typeof window.jspdf.jsPDF === 'undefined') {
+            console.log('تهيئة مكتبة jsPDF...');
+            if (typeof window.jsPDF !== 'undefined') {
+                window.jspdf.jsPDF = window.jsPDF;
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- لوحة التحكم -->
+    <div class="controls">
+        <!-- المعلومات الشخصية -->
+        <details open>
+            <summary>المعلومات الشخصية</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">الاسم الكامل</label>
+                    <input type="text" id="fullName" placeholder="أدخل اسمك الكامل" oninput="updatePreview()">
+                </div>
+                <div class="field">
+                    <label class="small">المسمى الوظيفي</label>
+                    <input type="text" id="jobTitle" placeholder="مطور ويب، مصمم جرافيك..." oninput="updatePreview()">
+                </div>
+                <div class="field">
+                    <label class="small">النبذة الشخصية</label>
+                    <textarea id="summary" placeholder="اكتب نبذة مختصرة عنك..." oninput="updatePreview()"></textarea>
+                </div>
+                <div class="field">
+                    <label class="small">الصورة الشخصية</label>
+                    <input type="file" id="profileImage" accept="image/*" onchange="handleImageUpload(this)">
+                </div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideImage" onchange="updatePreview()"> إخفاء الصورة الشخصية
+                    </label>
+                </div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideSummary" onchange="toggleSection('summary')"> إخفاء النبذة الشخصية
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- معلومات الاتصال -->
+        <details open>
+            <summary>معلومات الاتصال</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">رقم الهاتف</label>
+                    <input type="text" id="phone" placeholder="+966 50 123 4567" oninput="updatePreview()">
+                </div>
+                <div class="field">
+                    <label class="small">البريد الإلكتروني</label>
+                    <input type="text" id="email" placeholder="example@email.com" oninput="updatePreview()">
+                </div>
+                <div class="field">
+                    <label class="small">العنوان</label>
+                    <input type="text" id="address" placeholder="الرياض، المملكة العربية السعودية" oninput="updatePreview()">
+                </div>
+                <div class="field">
+                    <label class="small">الموقع الإلكتروني</label>
+                    <input type="text" id="website" placeholder="www.example.com" oninput="updatePreview()">
+                </div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideWebsite" onchange="updatePreview()"> إخفاء الموقع الإلكتروني
+                    </label>
+                </div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideContact" onchange="toggleSection('contact')"> إخفاء قسم معلومات الاتصال
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- المهارات -->
+        <details open>
+            <summary>المهارات</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">اسم المهارة</label>
+                    <input type="text" id="skillName" placeholder="JavaScript, التصميم...">
+                </div>
+                <div class="field">
+                    <label class="small">مستوى الإتقان (1-100)</label>
+                    <input type="number" id="skillLevel" min="1" max="100" value="80">
+                </div>
+                <div class="field">
+                    <label class="small">نوع العرض</label>
+                    <select id="skillType">
+                        <option value="circle">دائري</option>
+                        <option value="bar">شريط</option>
+                        <option value="stars">نجوم</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="small">لون الشكل</label>
+                    <input type="color" id="skillColor" value="#3b82f6" onchange="updateSkillColor()">
+                </div>
+                <button class="btn" onclick="addSkill()">إضافة مهارة</button>
+                <div class="list" id="skillsList"></div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideSkills" onchange="toggleSection('skills')"> إخفاء قسم المهارات
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- الخبرات العملية -->
+        <details open>
+            <summary>الخبرات العملية</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">نوع العرض</label>
+                    <select id="experienceLayout" onchange="updateExperiencesPreview()">
+                        <option value="vertical">عمودي (تقليدي)</option>
+                        <option value="horizontal">أفقي (شبكة)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="small">المسمى الوظيفي</label>
+                    <input type="text" id="expTitle" placeholder="مطور ويب أول">
+                </div>
+                <div class="field">
+                    <label class="small">اسم الشركة</label>
+                    <input type="text" id="expCompany" placeholder="شركة التقنية المتقدمة">
+                </div>
+                <div class="field">
+                    <label class="small">الفترة الزمنية</label>
+                    <input type="text" id="expPeriod" placeholder="2020 - 2023">
+                </div>
+                <div class="field">
+                    <label class="small">الوصف</label>
+                    <textarea id="expDescription" placeholder="وصف المهام والإنجازات..."></textarea>
+                </div>
+                <button class="btn" onclick="addExperience()">إضافة خبرة</button>
+                <div class="list" id="experiencesList"></div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideExperiences" onchange="toggleSection('experiences')"> إخفاء قسم الخبرات العملية
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- التعليم -->
+        <details open>
+            <summary>التعليم</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">نوع العرض</label>
+                    <select id="educationLayout" onchange="updateEducationPreview()">
+                        <option value="vertical">عمودي (تقليدي)</option>
+                        <option value="horizontal">أفقي (شبكة)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="small">الدرجة العلمية</label>
+                    <input type="text" id="eduDegree" placeholder="بكالوريوس علوم الحاسب">
+                </div>
+                <div class="field">
+                    <label class="small">اسم الجامعة</label>
+                    <input type="text" id="eduInstitution" placeholder="جامعة الملك سعود">
+                </div>
+                <div class="field">
+                    <label class="small">سنة التخرج</label>
+                    <input type="text" id="eduYear" placeholder="2020">
+                </div>
+                <button class="btn" onclick="addEducation()">إضافة تعليم</button>
+                <div class="list" id="educationList"></div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideEducation" onchange="toggleSection('education')"> إخفاء قسم التعليم
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- اللغات -->
+        <details open>
+            <summary>اللغات</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">اسم اللغة</label>
+                    <input type="text" id="langName" placeholder="الإنجليزية">
+                </div>
+                <div class="field">
+                    <label class="small">مستوى الإتقان</label>
+                    <select id="langLevel">
+                        <option value="مبتدئ">مبتدئ</option>
+                        <option value="متوسط">متوسط</option>
+                        <option value="متقدم">متقدم</option>
+                        <option value="طليق">طليق</option>
+                        <option value="لغة أم">لغة أم</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="addLanguage()">إضافة لغة</button>
+                <div class="list" id="languagesList"></div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideLanguages" onchange="toggleSection('languages')"> إخفاء قسم اللغات
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- الهوايات -->
+        <details open>
+            <summary>الهوايات والاهتمامات</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">نوع العرض</label>
+                    <select id="hobbiesDisplay" onchange="updateHobbiesPreview()">
+                        <option value="tags">علامات</option>
+                        <option value="list">قائمة</option>
+                        <option value="cards">بطاقات</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="small">اسم الهواية</label>
+                    <input type="text" id="hobbyName" placeholder="القراءة">
+                </div>
+                <div class="field">
+                    <label class="small">الأيقونة</label>
+                    <input type="text" id="hobbyIcon" placeholder="📚" maxlength="2">
+                </div>
+                <div class="field">
+                    <label class="small">الوصف (اختياري)</label>
+                    <input type="text" id="hobbyDescription" placeholder="أحب قراءة الكتب التقنية">
+                </div>
+                <button class="btn" onclick="addHobby()">إضافة هواية</button>
+                <div class="list" id="hobbiesList"></div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideHobbies" onchange="toggleSection('hobbies')"> إخفاء قسم الهوايات والاهتمامات
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- البيانات الإضافية -->
+        <details open>
+            <summary>البيانات الإضافية</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">نوع العرض</label>
+                    <select id="extraDataDisplay" onchange="updateExtraDataPreview()">
+                        <option value="vertical">عمودي (تقليدي)</option>
+                        <option value="grid">أفقي (شبكة)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="small">اسم القسم</label>
+                    <input type="text" id="extraSectionName" placeholder="الجوائز، الشهادات، المشاريع...">
+                </div>
+                <div class="field">
+                    <label class="small">العنوان</label>
+                    <input type="text" id="extraTitle" placeholder="عنوان العنصر">
+                </div>
+                <div class="field">
+                    <label class="small">التفاصيل</label>
+                    <input type="text" id="extraDetails" placeholder="تفاصيل إضافية">
+                </div>
+                <div class="field">
+                    <label class="small">التاريخ</label>
+                    <input type="text" id="extraDate" placeholder="2023">
+                </div>
+                <div class="field">
+                    <label class="small">الأيقونة</label>
+                    <input type="text" id="extraIcon" placeholder="🏆" maxlength="2">
+                </div>
+                <button class="btn" onclick="addExtraData()">إضافة عنصر</button>
+                <div class="list" id="extraDataList"></div>
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideExtraData" onchange="toggleSection('extraData')"> إخفاء قسم البيانات الإضافية
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- تحكم التصميم -->
+        <details>
+            <summary>تحكم التصميم</summary>
+            <div class="section-content">
+                <!-- الخطوط -->
+                <div class="field">
+                    <label class="small">نوع الخط</label>
+                    <select id="fontFamily" onchange="updateFontFamily()">
+                        <option value="Cairo">Cairo</option>
+                        <option value="Tajawal">Tajawal</option>
+                        <option value="Noto Sans Arabic">Noto Sans Arabic</option>
+                        <option value="Amiri">Amiri</option>
+                    </select>
+                </div>
+
+                <!-- الألوان -->
+                <div class="field">
+                    <label class="small">لوحات الألوان</label>
+                    <div class="palette-grid">
+                        <div class="palette" onclick="applyColorPalette('#0f172a', '#1d4ed8')">
+                            <div class="colors">
+                                <div style="background: #0f172a; flex: 1;"></div>
+                                <div style="background: #1d4ed8; flex: 1;"></div>
+                            </div>
+                            <div class="name">أزرق</div>
+                        </div>
+                        <div class="palette" onclick="applyColorPalette('#065f46', '#059669')">
+                            <div class="colors">
+                                <div style="background: #065f46; flex: 1;"></div>
+                                <div style="background: #059669; flex: 1;"></div>
+                            </div>
+                            <div class="name">أخضر</div>
+                        </div>
+                        <div class="palette" onclick="applyColorPalette('#7c2d12', '#dc2626')">
+                            <div class="colors">
+                                <div style="background: #7c2d12; flex: 1;"></div>
+                                <div style="background: #dc2626; flex: 1;"></div>
+                            </div>
+                            <div class="name">أحمر</div>
+                        </div>
+                        <div class="palette" onclick="applyColorPalette('#581c87', '#7c3aed')">
+                            <div class="colors">
+                                <div style="background: #581c87; flex: 1;"></div>
+                                <div style="background: #7c3aed; flex: 1;"></div>
+                            </div>
+                            <div class="name">بنفسجي</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-picker">
+                    <div class="color-control">
+                        <label class="small">اللون الأساسي</label>
+                        <input type="color" id="primaryColor" value="#0f172a" onchange="updateColors()">
+                    </div>
+                    <div class="color-control">
+                        <label class="small">اللون الثانوي</label>
+                        <input type="color" id="secondaryColor" value="#1d4ed8" onchange="updateColors()">
+                    </div>
+                </div>
+
+                <!-- ألوان الخطوط -->
+                <div class="color-picker">
+                    <div class="color-control">
+                        <label class="small">لون الاسم</label>
+                        <input type="color" id="nameColor" value="#ffffff" onchange="updateFontColors()">
+                    </div>
+                    <div class="color-control">
+                        <label class="small">لون العناوين</label>
+                        <input type="color" id="headingColor" value="#ffffff" onchange="updateFontColors()">
+                    </div>
+                    <div class="color-control">
+                        <label class="small">لون النص العادي</label>
+                        <input type="color" id="textColor" value="#111111" onchange="updateFontColors()">
+                    </div>
+                    <div class="color-control">
+                        <label class="small">لون النص الثانوي</label>
+                        <input type="color" id="secondaryTextColor" value="#666666" onchange="updateFontColors()">
+                    </div>
+                </div>
+
+                <!-- أحجام الخطوط -->
+                <div class="field">
+                    <label class="small">حجم خط الاسم</label>
+                    <div class="slider-control">
+                        <input type="range" id="nameFont" min="16" max="36" value="28" oninput="updateFontSizes()">
+                        <span class="value" id="nameFontValue">28px</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="small">حجم خط العناوين</label>
+                    <div class="slider-control">
+                        <input type="range" id="headingFont" min="14" max="22" value="18" oninput="updateFontSizes()">
+                        <span class="value" id="headingFontValue">18px</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="small">حجم النص العادي</label>
+                    <div class="slider-control">
+                        <input type="range" id="baseFont" min="10" max="18" value="14" oninput="updateFontSizes()">
+                        <span class="value" id="baseFontValue">14px</span>
+                    </div>
+                </div>
+
+                <!-- التباعد -->
+                <div class="field">
+                    <label class="small">التباعد بين الأقسام</label>
+                    <div class="slider-control">
+                        <input type="range" id="sectionGap" min="10" max="40" value="18" oninput="updateSpacing()">
+                        <span class="value" id="sectionGapValue">18px</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="small">التباعد بين العناصر</label>
+                    <div class="slider-control">
+                        <input type="range" id="itemGap" min="5" max="20" value="8" oninput="updateSpacing()">
+                        <span class="value" id="itemGapValue">8px</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="small">الحشو الداخلي للبطاقات</label>
+                    <div class="slider-control">
+                        <input type="range" id="cardPadding" min="8" max="24" value="12" oninput="updateSpacing()">
+                        <span class="value" id="cardPaddingValue">12px</span>
+                    </div>
+                </div>
+
+                <!-- الحدود -->
+                <div class="field">
+                    <label class="small">سمك حدود البطاقات</label>
+                    <div class="slider-control">
+                        <input type="range" id="borderWidth" min="0" max="5" value="0" oninput="updateBorders()">
+                        <span class="value" id="borderWidthValue">0px</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="small">لون الحدود</label>
+                    <input type="color" id="borderColor" value="#e5e7eb" onchange="updateBorders()">
+                </div>
+
+                <div class="field">
+                    <label class="small">انحناء الزوايا</label>
+                    <div class="slider-control">
+                        <input type="range" id="borderRadius" min="0" max="20" value="12" oninput="updateBorders()">
+                        <span class="value" id="borderRadiusValue">12px</span>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <!-- ترتيب الأقسام -->
+        <details>
+            <summary>ترتيب الأقسام</summary>
+            <div class="section-content">
+                <div class="field">
+                    <label class="small">ترتيب وموقع الأقسام</label>
+                    <div class="list" id="allSectionsList">
+                        <div class="chip" data-section="contact">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> معلومات الاتصال</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('contact', this.value)">
+                                    <option value="sidebar" selected>الشريط الجانبي</option>
+                                    <option value="main">الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('contact', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                        <div class="chip" data-section="skills">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> المهارات</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('skills', this.value)">
+                                    <option value="sidebar" selected>الشريط الجانبي</option>
+                                    <option value="main">الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('skills', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                        <div class="chip" data-section="languages">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> اللغات</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('languages', this.value)">
+                                    <option value="sidebar" selected>الشريط الجانبي</option>
+                                    <option value="main">الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('languages', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                        <div class="chip" data-section="hobbies">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> الهوايات والاهتمامات</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('hobbies', this.value)">
+                                    <option value="sidebar" selected>الشريط الجانبي</option>
+                                    <option value="main">الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('hobbies', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                        <div class="chip" data-section="summary">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> النبذة الشخصية</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('summary', this.value)">
+                                    <option value="sidebar">الشريط الجانبي</option>
+                                    <option value="main" selected>الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('summary', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                        <div class="chip" data-section="experiences">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> الخبرات العملية</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('experiences', this.value)">
+                                    <option value="sidebar">الشريط الجانبي</option>
+                                    <option value="main" selected>الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('experiences', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                        <div class="chip" data-section="education">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> التعليم</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('education', this.value)">
+                                    <option value="sidebar">الشريط الجانبي</option>
+                                    <option value="main" selected>الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('education', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                        <div class="chip" data-section="extra">
+                            <span><i class="fas fa-grip-vertical drag-handle"></i> البيانات الإضافية</span>
+                            <div class="section-controls">
+                                <select onchange="changeSectionLocation('extra', this.value)">
+                                    <option value="sidebar">الشريط الجانبي</option>
+                                    <option value="main" selected>الجزء الرئيسي</option>
+                                </select>
+                                <label><input type="checkbox" checked onchange="toggleSection('extra', this.checked)"> إظهار</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <label class="small">عرض الشريط الجانبي</label>
+                    <select id="sidebarWidth" onchange="updateSidebarWidth()">
+                        <option value="240px">ضيق (240px)</option>
+                        <option value="280px" selected>متوسط (280px)</option>
+                        <option value="320px">عريض (320px)</option>
+                        <option value="360px">عريض جداً (360px)</option>
+                    </select>
+                </div>
+                
+                <div class="field">
+                    <label>
+                        <input type="checkbox" id="hideHeader" onchange="toggleHeaderSection()"> إخفاء قسم الاسم والصورة
+                    </label>
+                </div>
+                
+                <button class="btn ghost" onclick="resetSectionsOrder()">إعادة تعيين الترتيب</button>
+            </div>
+        </details>
+
+        <!-- شريط الأدوات -->
+        <div class="toolbar">
+            <button class="btn" onclick="showPaymentModal()">تصدير PDF</button>
+        </div>
+    </div>
+
+    <!-- المعاينة -->
+    <div class="preview">
+        <div class="a4-container">
+            <div class="a4">
+                <div class="cv" id="cvPreview">
+                    <!-- الشريط الجانبي -->
+                    <div class="aside">
+                        <!-- الصورة والاسم -->
+                        <div class="row-top" id="headerSection">
+                            <div class="avatar" id="avatarContainer">
+                                <img id="avatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Ccircle cx='48' cy='48' r='48' fill='%23e5e7eb'/%3E%3Cpath d='M48 48c8.837 0 16-7.163 16-16s-7.163-16-16-16-16 7.163-16 16 7.163 16 16 16zm0 8c-10.664 0-32 5.336-32 16v8h64v-8c0-10.664-21.336-16-32-16z' fill='%23374151'/%3E%3C/svg%3E" alt="الصورة الشخصية">
+                            </div>
+                            <div class="title-box">
+                                <div class="name" id="previewName">اسمك هنا</div>
+                                <div class="role" id="previewRole">المسمى الوظيفي</div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات الاتصال -->
+                        <div class="section" id="contactSection">
+                            <h3>معلومات الاتصال</h3>
+                            <div class="kv" id="contactInfo">
+                                <span>📞</span><span id="previewPhone">+966 50 123 4567</span>
+                                <span>✉️</span><span id="previewEmail">example@email.com</span>
+                                <span>📍</span><span id="previewAddress">الرياض، السعودية</span>
+                                <span id="websiteIcon">🌐</span><span id="previewWebsite">www.example.com</span>
+                            </div>
+                        </div>
+
+                        <!-- المهارات -->
+                        <div class="section" id="skillsSection">
+                            <h3>المهارات</h3>
+                            <div class="skill-grid" id="skillsGrid">
+                                <!-- المهارات ستظهر هنا -->
+                            </div>
+                        </div>
+
+                        <!-- اللغات -->
+                        <div class="section" id="languagesSection">
+                            <h3>اللغات</h3>
+                            <div class="kv" id="languagesGrid">
+                                <!-- اللغات ستظهر هنا -->
+                            </div>
+                        </div>
+
+                        <!-- الهوايات -->
+                        <div class="section" id="hobbiesSection">
+                            <h3>الهوايات والاهتمامات</h3>
+                            <div id="hobbiesGrid">
+                                <!-- الهوايات ستظهر هنا -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- الفاصل -->
+                    <div class="divider"></div>
+
+                    <!-- القسم الرئيسي -->
+                    <div class="main">
+                        <!-- النبذة الشخصية -->
+                        <div class="section" id="summarySection">
+                            <h3>النبذة الشخصية</h3>
+                            <div class="summary" id="previewSummary" style="white-space: pre-wrap; word-break: break-word; color: var(--text-color);">
+                                اكتب نبذة مختصرة عن خبراتك ومهاراتك وأهدافك المهنية...
+                            </div>
+                        </div>
+
+                        <!-- الخبرات العملية -->
+                        <div class="section" id="experiencesSection">
+                            <h3>الخبرات العملية</h3>
+                            <div id="experiencesGrid">
+                                <!-- الخبرات ستظهر هنا -->
+                            </div>
+                        </div>
+
+                        <!-- التعليم -->
+                        <div class="section" id="educationSection">
+                            <h3>التعليم</h3>
+                            <div id="educationGrid">
+                                <!-- التعليم سيظهر هنا -->
+                            </div>
+                        </div>
+
+                        <!-- البيانات الإضافية -->
+                        <div id="extraSections">
+                            <!-- الأقسام الإضافية ستظهر هنا -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الدفع -->
+    <div class="modal hidden" id="paymentModal">
+        <div class="modal-content">
+            <h3>تصدير السيرة الذاتية</h3>
+            <p>نتمنى أنك استفدت من الأداة علماً أن سعر النسخة ٩.٩٩ ريال</p>
+            <div class="modal-actions">
+                <button class="btn ghost" onclick="downloadPDF()">إغلاق</button>
+                <button class="btn" onclick="payAndDownload()">دفع</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // البيانات
+        let cvData = {
+            personal: {
+                name: '',
+                title: '',
+                summary: '',
+                image: '',
+                hideImage: false
+            },
+            contact: {
+                phone: '',
+                email: '',
+                address: '',
+                website: '',
+                hideWebsite: false
+            },
+            skills: [],
+            experiences: [],
+            education: [],
+            languages: [],
+            hobbies: [],
+            extraSections: {}
+        };
+
+        // تحديث المعاينة
+        function updatePreview() {
+            // تحديث المعلومات الشخصية
+            const name = document.getElementById('fullName').value || 'اسمك هنا';
+            const title = document.getElementById('jobTitle').value || 'المسمى الوظيفي';
+            const summary = document.getElementById('summary').value || 'اكتب نبذة مختصرة عن خبراتك ومهاراتك وأهدافك المهنية...';
+            
+            document.getElementById('previewName').textContent = name;
+            document.getElementById('previewRole').textContent = title;
+            document.getElementById('previewSummary').innerHTML = summary.replace(/\n/g, '<br>');
+
+            // تحديث معلومات الاتصال
+            const phone = document.getElementById('phone').value || '+966 50 123 4567';
+            const email = document.getElementById('email').value || 'example@email.com';
+            const address = document.getElementById('address').value || 'الرياض، السعودية';
+            const website = document.getElementById('website').value || 'www.example.com';
+            
+            document.getElementById('previewPhone').textContent = phone;
+            document.getElementById('previewEmail').textContent = email;
+            document.getElementById('previewAddress').textContent = address;
+            document.getElementById('previewWebsite').textContent = website;
+
+            // إخفاء/إظهار الصورة
+            const hideImage = document.getElementById('hideImage').checked;
+            document.getElementById('avatarContainer').style.display = hideImage ? 'none' : 'block';
+
+            // إخفاء/إظهار الموقع
+            const hideWebsite = document.getElementById('hideWebsite').checked;
+            document.getElementById('websiteIcon').style.display = hideWebsite ? 'none' : 'inline';
+            document.getElementById('previewWebsite').style.display = hideWebsite ? 'none' : 'inline';
+
+            // حفظ البيانات
+            cvData.personal = { name, title, summary, hideImage };
+            cvData.contact = { phone, email, address, website, hideWebsite };
+        }
+
+        // رفع الصورة
+        function handleImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatarImg').src = e.target.result;
+                    cvData.personal.image = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // إضافة مهارة
+        function addSkill() {
+            const name = document.getElementById('skillName').value;
+            const level = parseInt(document.getElementById('skillLevel').value);
+            const type = document.getElementById('skillType').value;
+            const color = document.getElementById('skillColor').value;
+            
+            if (!name) return;
+
+            const skill = { name, level, type, color, id: Date.now() };
+            cvData.skills.push(skill);
+            
+            updateSkillsList();
+            updateSkillsPreview();
+            
+            // مسح الحقول
+            document.getElementById('skillName').value = '';
+            document.getElementById('skillLevel').value = '80';
+        }
+
+        // حذف مهارة
+        function removeSkill(id) {
+            cvData.skills = cvData.skills.filter(skill => skill.id !== id);
+            updateSkillsList();
+            updateSkillsPreview();
+        }
+
+        // تحديث قائمة المهارات
+        function updateSkillsList() {
+            const skillsList = document.getElementById('skillsList');
+            skillsList.innerHTML = '';
+            cvData.skills.forEach(skill => {
+                const skillItem = document.createElement('div');
+                skillItem.className = 'chip';
+                skillItem.innerHTML = `
+                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${skill.name} (${skill.level}%)</span>
+                    <button class="btn dan" onclick="removeSkill(${skill.id})">×</button>
+                `;
+                skillsList.appendChild(skillItem);
+            });
+            
+            // تفعيل السحب والإفلات
+            new Sortable(skillsList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                onEnd: function(evt) {
+                    // إعادة ترتيب المصفوفة
+                    const item = cvData.skills.splice(evt.oldIndex, 1)[0];
+                    cvData.skills.splice(evt.newIndex, 0, item);
+                    updateSkillsPreview();
+                }
+            });
+        }
+
+        // تحديث معاينة المهارات
+        function updateSkillsPreview() {
+            const skillsGrid = document.getElementById('skillsGrid');
+            skillsGrid.innerHTML = '';
+            
+            cvData.skills.forEach(skill => {
+                const skillElement = document.createElement('div');
+                skillElement.className = 'skill';
+                
+                let gauge = '';
+                const skillColor = skill.color || '#3b82f6';
+                
+                if (skill.type === 'circle') {
+                    const circumference = 2 * Math.PI * 18;
+                    const strokeDasharray = (skill.level / 100) * circumference;
+                    gauge = `
+                        <div class="gauge-container">
+                            <svg class="gauge" viewBox="0 0 40 40">
+                                <circle class="g-bg" cx="20" cy="20" r="18" stroke-width="4"/>
+                                <circle class="g-ring" cx="20" cy="20" r="18" stroke-width="4" 
+                                        stroke="${skillColor}" 
+                                        stroke-dasharray="${strokeDasharray} ${circumference}"/>
+                                <text class="g-center" x="20" y="20">${skill.level}%</text>
+                            </svg>
+                        </div>
+                    `;
+                } else if (skill.type === 'bar') {
+                    gauge = `
+                        <div class="bar">
+                            <span style="width: ${skill.level}%; background: ${skillColor};"></span>
+                        </div>
+                    `;
+                } else if (skill.type === 'stars') {
+                    const stars = Math.round(skill.level / 20);
+                    gauge = `<div class="stars" style="color: ${skillColor};">${'★'.repeat(stars)}${'☆'.repeat(5-stars)}</div>`;
+                }
+                
+                skillElement.innerHTML = `
+                    ${gauge}
+                    <div class="label">${skill.name}</div>
+                `;
+                skillsGrid.appendChild(skillElement);
+            });
+        }
+
+        // تحديث لون المهارات
+        function updateSkillColor() {
+            const newColor = document.getElementById('skillColor').value;
+            // تحديث لون جميع المهارات الموجودة
+            cvData.skills.forEach(skill => {
+                skill.color = newColor;
+            });
+            updateSkillsPreview();
+        }
+
+        // لون المهارة حسب المستوى
+        function getSkillColor(level) {
+            if (level >= 80) return '#22c55e';
+            if (level >= 60) return '#3b82f6';
+            if (level >= 40) return '#f59e0b';
+            return '#ef4444';
+        }
+
+        // إضافة خبرة
+        function addExperience() {
+            const title = document.getElementById('expTitle').value;
+            const company = document.getElementById('expCompany').value;
+            const period = document.getElementById('expPeriod').value;
+            const description = document.getElementById('expDescription').value;
+            
+            if (!title || !company) return;
+
+            const experience = { title, company, period, description, id: Date.now() };
+            cvData.experiences.push(experience);
+            
+            updateExperiencesList();
+            updateExperiencesPreview();
+            
+            // مسح الحقول
+            document.getElementById('expTitle').value = '';
+            document.getElementById('expCompany').value = '';
+            document.getElementById('expPeriod').value = '';
+            document.getElementById('expDescription').value = '';
+        }
+
+        // حذف خبرة
+        function removeExperience(id) {
+            cvData.experiences = cvData.experiences.filter(exp => exp.id !== id);
+            updateExperiencesList();
+            updateExperiencesPreview();
+        }
+
+        // تحديث قائمة الخبرات
+        function updateExperiencesList() {
+            const experiencesList = document.getElementById('experiencesList');
+            experiencesList.innerHTML = '';
+            cvData.experiences.forEach(exp => {
+                const expItem = document.createElement('div');
+                expItem.className = 'chip';
+                expItem.innerHTML = `
+                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${exp.title} - ${exp.company}</span>
+                    <button class="btn dan" onclick="removeExperience(${exp.id})">×</button>
+                `;
+                experiencesList.appendChild(expItem);
+            });
+            
+            // تفعيل السحب والإفلات
+            new Sortable(experiencesList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                onEnd: function(evt) {
+                    const item = cvData.experiences.splice(evt.oldIndex, 1)[0];
+                    cvData.experiences.splice(evt.newIndex, 0, item);
+                    updateExperiencesPreview();
+                }
+            });
+        }
+
+        // تحديث معاينة الخبرات
+        function updateExperiencesPreview() {
+            const experiencesGrid = document.getElementById('experiencesGrid');
+            const layout = document.getElementById('experienceLayout').value;
+            
+            experiencesGrid.innerHTML = '';
+            experiencesGrid.className = layout === 'horizontal' ? 'grid-layout' : '';
+            
+            cvData.experiences.forEach(exp => {
+                const expElement = document.createElement('div');
+                expElement.className = layout === 'horizontal' ? 'experience-item' : '';
+                expElement.style.marginBottom = layout === 'vertical' ? '16px' : '0';
+                expElement.innerHTML = `
+                    <div style="font-weight: bold; color: var(--heading);">${exp.title}</div>
+                    <div style="color: var(--secondary); font-weight: 600;">${exp.company}</div>
+                    <div style="font-size: 12px; color: #666; margin: 4px 0;">${exp.period}</div>
+                    <div style="font-size: 13px; line-height: 1.4;">${exp.description}</div>
+                `;
+                experiencesGrid.appendChild(expElement);
+            });
+        }
+
+        // إضافة تعليم
+        function addEducation() {
+            const degree = document.getElementById('eduDegree').value;
+            const institution = document.getElementById('eduInstitution').value;
+            const year = document.getElementById('eduYear').value;
+            
+            if (!degree || !institution) return;
+
+            const education = { degree, institution, year, id: Date.now() };
+            cvData.education.push(education);
+            
+            updateEducationList();
+            updateEducationPreview();
+            
+            // مسح الحقول
+            document.getElementById('eduDegree').value = '';
+            document.getElementById('eduInstitution').value = '';
+            document.getElementById('eduYear').value = '';
+        }
+
+        // حذف تعليم
+        function removeEducation(id) {
+            cvData.education = cvData.education.filter(edu => edu.id !== id);
+            updateEducationList();
+            updateEducationPreview();
+        }
+
+        // تحديث قائمة التعليم
+        function updateEducationList() {
+            const educationList = document.getElementById('educationList');
+            educationList.innerHTML = '';
+            cvData.education.forEach(edu => {
+                const eduItem = document.createElement('div');
+                eduItem.className = 'chip';
+                eduItem.innerHTML = `
+                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${edu.degree} - ${edu.institution}</span>
+                    <button class="btn dan" onclick="removeEducation(${edu.id})">×</button>
+                `;
+                educationList.appendChild(eduItem);
+            });
+            
+            // تفعيل السحب والإفلات
+            new Sortable(educationList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                onEnd: function(evt) {
+                    const item = cvData.education.splice(evt.oldIndex, 1)[0];
+                    cvData.education.splice(evt.newIndex, 0, item);
+                    updateEducationPreview();
+                }
+            });
+        }
+
+        // تحديث معاينة التعليم
+        function updateEducationPreview() {
+            const educationGrid = document.getElementById('educationGrid');
+            const layout = document.getElementById('educationLayout').value;
+            
+            educationGrid.innerHTML = '';
+            educationGrid.className = layout === 'horizontal' ? 'grid-layout' : '';
+            
+            cvData.education.forEach(edu => {
+                const eduElement = document.createElement('div');
+                eduElement.className = layout === 'horizontal' ? 'education-item' : '';
+                eduElement.style.marginBottom = layout === 'vertical' ? '16px' : '0';
+                eduElement.innerHTML = `
+                    <div style="font-weight: bold; color: var(--heading);">${edu.degree}</div>
+                    <div style="color: var(--secondary); font-weight: 600;">${edu.institution}</div>
+                    <div style="font-size: 12px; color: #666; margin: 4px 0;">${edu.year}</div>
+                `;
+                educationGrid.appendChild(eduElement);
+            });
+        }
+
+        // إضافة لغة
+        function addLanguage() {
+            const name = document.getElementById('langName').value;
+            const level = document.getElementById('langLevel').value;
+            
+            if (!name) return;
+
+            const language = { name, level, id: Date.now() };
+            cvData.languages.push(language);
+            
+            updateLanguagesList();
+            updateLanguagesPreview();
+            
+            // مسح الحقول
+            document.getElementById('langName').value = '';
+            document.getElementById('langLevel').value = 'مبتدئ';
+        }
+
+        // حذف لغة
+        function removeLanguage(id) {
+            cvData.languages = cvData.languages.filter(lang => lang.id !== id);
+            updateLanguagesList();
+            updateLanguagesPreview();
+        }
+
+        // تحديث قائمة اللغات
+        function updateLanguagesList() {
+            const languagesList = document.getElementById('languagesList');
+            languagesList.innerHTML = '';
+            cvData.languages.forEach(lang => {
+                const langItem = document.createElement('div');
+                langItem.className = 'chip';
+                langItem.innerHTML = `
+                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${lang.name} - ${lang.level}</span>
+                    <button class="btn dan" onclick="removeLanguage(${lang.id})">×</button>
+                `;
+                languagesList.appendChild(langItem);
+            });
+            
+            // تفعيل السحب والإفلات
+            new Sortable(languagesList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                onEnd: function(evt) {
+                    const item = cvData.languages.splice(evt.oldIndex, 1)[0];
+                    cvData.languages.splice(evt.newIndex, 0, item);
+                    updateLanguagesPreview();
+                }
+            });
+        }
+
+        // تحديث معاينة اللغات
+        function updateLanguagesPreview() {
+            const languagesGrid = document.getElementById('languagesGrid');
+            languagesGrid.innerHTML = '';
+            
+            cvData.languages.forEach(lang => {
+                const langSpan1 = document.createElement('span');
+                langSpan1.textContent = lang.name;
+                const langSpan2 = document.createElement('span');
+                langSpan2.textContent = lang.level;
+                languagesGrid.appendChild(langSpan1);
+                languagesGrid.appendChild(langSpan2);
+            });
+        }
+
+        // إضافة هواية
+        function addHobby() {
+            const name = document.getElementById('hobbyName').value;
+            const icon = document.getElementById('hobbyIcon').value;
+            const description = document.getElementById('hobbyDescription').value;
+            
+            if (!name) return;
+
+            const hobby = { name, icon, description, id: Date.now() };
+            cvData.hobbies.push(hobby);
+            
+            updateHobbiesList();
+            updateHobbiesPreview();
+            
+            // مسح الحقول
+            document.getElementById('hobbyName').value = '';
+            document.getElementById('hobbyIcon').value = '';
+            document.getElementById('hobbyDescription').value = '';
+        }
+
+        // حذف هواية
+        function removeHobby(id) {
+            cvData.hobbies = cvData.hobbies.filter(hobby => hobby.id !== id);
+            updateHobbiesList();
+            updateHobbiesPreview();
+        }
+
+        // تحديث قائمة الهوايات
+        function updateHobbiesList() {
+            const hobbiesList = document.getElementById('hobbiesList');
+            hobbiesList.innerHTML = '';
+            cvData.hobbies.forEach(hobby => {
+                const hobbyItem = document.createElement('div');
+                hobbyItem.className = 'chip';
+                hobbyItem.innerHTML = `
+                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${hobby.icon} ${hobby.name}</span>
+                    <button class="btn dan" onclick="removeHobby(${hobby.id})">×</button>
+                `;
+                hobbiesList.appendChild(hobbyItem);
+            });
+            
+            // تفعيل السحب والإفلات
+            new Sortable(hobbiesList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                onEnd: function(evt) {
+                    const item = cvData.hobbies.splice(evt.oldIndex, 1)[0];
+                    cvData.hobbies.splice(evt.newIndex, 0, item);
+                    updateHobbiesPreview();
+                }
+            });
+        }
+
+        // تحديث معاينة الهوايات
+        function updateHobbiesPreview() {
+            const hobbiesGrid = document.getElementById('hobbiesGrid');
+            const displayType = document.getElementById('hobbiesDisplay').value;
+            
+            hobbiesGrid.innerHTML = '';
+            
+            if (displayType === 'tags') {
+                cvData.hobbies.forEach(hobby => {
+                    const hobbyElement = document.createElement('div');
+                    hobbyElement.className = 'tag';
+                    hobbyElement.innerHTML = `
+                        <span>${hobby.icon}</span>
+                        <span>${hobby.name}</span>
+                    `;
+                    hobbiesGrid.appendChild(hobbyElement);
+                });
+            } else if (displayType === 'list') {
+                const listElement = document.createElement('div');
+                listElement.className = 'kv';
+                cvData.hobbies.forEach(hobby => {
+                    const iconSpan = document.createElement('span');
+                    iconSpan.textContent = hobby.icon;
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = hobby.name;
+                    listElement.appendChild(iconSpan);
+                    listElement.appendChild(nameSpan);
+                });
+                hobbiesGrid.appendChild(listElement);
+            } else if (displayType === 'cards') {
+                hobbiesGrid.style.display = 'grid';
+                hobbiesGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(120px, 1fr))';
+                hobbiesGrid.style.gap = '8px';
+                cvData.hobbies.forEach(hobby => {
+                    const hobbyElement = document.createElement('div');
+                    hobbyElement.style.cssText = `
+                        background: #f8fafc;
+                        border: var(--card-border);
+                        border-radius: var(--card-radius);
+                        padding: var(--card-pad);
+                        text-align: center;
+                        font-size: 12px;
+                    `;
+                    hobbyElement.innerHTML = `
+                        <div style="font-size: 16px; margin-bottom: 4px;">${hobby.icon}</div>
+                        <div style="font-weight: bold; color: var(--heading);">${hobby.name}</div>
+                        ${hobby.description ? `<div style="font-size: 10px; color: #666; margin-top: 2px;">${hobby.description}</div>` : ''}
+                    `;
+                    hobbiesGrid.appendChild(hobbyElement);
+                });
+            }
+        }
+
+        // إضافة بيانات إضافية
+        function addExtraData() {
+            const sectionName = document.getElementById('extraSectionName').value;
+            const title = document.getElementById('extraTitle').value;
+            const details = document.getElementById('extraDetails').value;
+            const date = document.getElementById('extraDate').value;
+            const icon = document.getElementById('extraIcon').value;
+            
+            if (!sectionName || !title) return;
+
+            if (!cvData.extraSections[sectionName]) {
+                cvData.extraSections[sectionName] = [];
+            }
+
+            const extraItem = { title, details, date, icon, id: Date.now() };
+            cvData.extraSections[sectionName].push(extraItem);
+            
+            updateExtraDataList();
+            updateExtraDataPreview();
+            
+            // مسح الحقول
+            document.getElementById('extraTitle').value = '';
+            document.getElementById('extraDetails').value = '';
+            document.getElementById('extraDate').value = '';
+            document.getElementById('extraIcon').value = '';
+        }
+
+        // حذف بيانات إضافية
+        function removeExtraData(sectionName, id) {
+            cvData.extraSections[sectionName] = cvData.extraSections[sectionName].filter(item => item.id !== id);
+            if (cvData.extraSections[sectionName].length === 0) {
+                delete cvData.extraSections[sectionName];
+            }
+            updateExtraDataList();
+            updateExtraDataPreview();
+        }
+
+        // تحديث قائمة البيانات الإضافية
+        function updateExtraDataList() {
+            const extraDataList = document.getElementById('extraDataList');
+            extraDataList.innerHTML = '';
+            
+            Object.keys(cvData.extraSections).forEach(sectionName => {
+                cvData.extraSections[sectionName].forEach(item => {
+                    const extraItem = document.createElement('div');
+                    extraItem.className = 'chip';
+                    extraItem.innerHTML = `
+                        <span><i class="fas fa-grip-vertical drag-handle"></i> ${sectionName}: ${item.title}</span>
+                        <button class="btn dan" onclick="removeExtraData('${sectionName}', ${item.id})">×</button>
+                    `;
+                    extraDataList.appendChild(extraItem);
+                });
+            });
+        }
+
+        // تحديث معاينة البيانات الإضافية
+        function updateExtraDataPreview() {
+            const extraSections = document.getElementById('extraSections');
+            extraSections.innerHTML = '';
+            
+            const displayType = document.getElementById('extraDataDisplay').value;
+            
+            Object.keys(cvData.extraSections).forEach(sectionName => {
+                const sectionElement = document.createElement('div');
+                sectionElement.className = 'section';
+                sectionElement.innerHTML = `<h3>${sectionName}</h3>`;
+                
+                const itemsContainer = document.createElement('div');
+                
+                // تطبيق العرض الشبكي إذا تم اختياره
+                if (displayType === 'grid') {
+                    itemsContainer.className = 'grid-layout';
+                }
+                
+                cvData.extraSections[sectionName].forEach(item => {
+                    const itemElement = document.createElement('div');
+                    
+                    if (displayType === 'grid') {
+                        itemElement.className = 'extra-data-item';
+                        itemElement.innerHTML = `
+                            <div style="font-weight: bold; color: var(--heading); margin-bottom: 8px;">
+                                ${item.icon ? item.icon + ' ' : ''}${item.title}
+                            </div>
+                            ${item.details ? `<div style="color: var(--secondary-text-color); font-size: 13px; margin-bottom: 6px;">${item.details}</div>` : ''}
+                            ${item.date ? `<div style="font-size: 11px; color: #888; font-weight: 600;">${item.date}</div>` : ''}
+                        `;
+                    } else {
+                        itemElement.style.marginBottom = '16px';
+                        itemElement.innerHTML = `
+                            <div style="font-weight: bold; color: var(--heading);">
+                                ${item.icon ? item.icon + ' ' : ''}${item.title}
+                            </div>
+                            ${item.details ? `<div style="color: var(--secondary); font-weight: 600;">${item.details}</div>` : ''}
+                            ${item.date ? `<div style="font-size: 12px; color: #666; margin: 4px 0;">${item.date}</div>` : ''}
+                        `;
+                    }
+                    
+                    itemsContainer.appendChild(itemElement);
+                });
+                
+                sectionElement.appendChild(itemsContainer);
+                extraSections.appendChild(sectionElement);
+            });
+        }
+
+        // تطبيق لوحة الألوان
+        function applyColorPalette(primary, secondary) {
+            document.getElementById('primaryColor').value = primary;
+            document.getElementById('secondaryColor').value = secondary;
+            updateColors();
+        }
+
+        // تحديث الألوان
+        function updateColors() {
+            const primary = document.getElementById('primaryColor').value;
+            const secondary = document.getElementById('secondaryColor').value;
+            
+            document.documentElement.style.setProperty('--primary', primary);
+            document.documentElement.style.setProperty('--secondary', secondary);
+        }
+
+        // تحديث ألوان الخطوط
+        function updateFontColors() {
+            const nameColor = document.getElementById('nameColor').value;
+            const headingColor = document.getElementById('headingColor').value;
+            const textColor = document.getElementById('textColor').value;
+            const secondaryTextColor = document.getElementById('secondaryTextColor').value;
+            
+            document.documentElement.style.setProperty('--name-color', nameColor);
+            document.documentElement.style.setProperty('--heading-color', headingColor);
+            document.documentElement.style.setProperty('--text-color', textColor);
+            document.documentElement.style.setProperty('--secondary-text-color', secondaryTextColor);
+        }
+
+        // تحديث نوع الخط
+        function updateFontFamily() {
+            const fontFamily = document.getElementById('fontFamily').value;
+            document.documentElement.style.setProperty('--font-body', `"${fontFamily}", sans-serif`);
+            document.documentElement.style.setProperty('--font-head', `"${fontFamily}", sans-serif`);
+            document.documentElement.style.setProperty('--font-name', `"${fontFamily}", sans-serif`);
+        }
+
+        // تحديث أحجام الخطوط
+        function updateFontSizes() {
+            const nameFont = document.getElementById('nameFont').value;
+            const headingFont = document.getElementById('headingFont').value;
+            const baseFont = document.getElementById('baseFont').value;
+            
+            document.getElementById('nameFontValue').textContent = nameFont + 'px';
+            document.getElementById('headingFontValue').textContent = headingFont + 'px';
+            document.getElementById('baseFontValue').textContent = baseFont + 'px';
+            
+            document.documentElement.style.setProperty('--name-font', nameFont + 'px');
+            document.documentElement.style.setProperty('--h3-font', headingFont + 'px');
+            document.documentElement.style.setProperty('--base-font', baseFont + 'px');
+        }
+
+        // تحديث التباعد
+        function updateSpacing() {
+            const sectionGap = document.getElementById('sectionGap').value;
+            const itemGap = document.getElementById('itemGap').value;
+            const cardPadding = document.getElementById('cardPadding').value;
+            
+            document.getElementById('sectionGapValue').textContent = sectionGap + 'px';
+            document.getElementById('itemGapValue').textContent = itemGap + 'px';
+            document.getElementById('cardPaddingValue').textContent = cardPadding + 'px';
+            
+            document.documentElement.style.setProperty('--section-gap', sectionGap + 'px');
+            document.documentElement.style.setProperty('--item-gap', itemGap + 'px');
+            document.documentElement.style.setProperty('--card-pad', cardPadding + 'px');
+        }
+
+        // تحديث الحدود
+        function updateBorders() {
+            const borderWidth = document.getElementById('borderWidth').value;
+            const borderColor = document.getElementById('borderColor').value;
+            const borderRadius = document.getElementById('borderRadius').value;
+            
+            document.getElementById('borderWidthValue').textContent = borderWidth + 'px';
+            document.getElementById('borderRadiusValue').textContent = borderRadius + 'px';
+            
+            document.documentElement.style.setProperty('--card-border', `${borderWidth}px solid ${borderColor}`);
+            document.documentElement.style.setProperty('--card-radius', borderRadius + 'px');
+        }
+
+        // إظهار نافذة الدفع
+        function showPaymentModal() {
+            document.getElementById('paymentModal').classList.remove('hidden');
+        }
+
+        // إخفاء نافذة الدفع
+        function hidePaymentModal() {
+            document.getElementById('paymentModal').classList.add('hidden');
+        }
+
+        // تحميل PDF مجاني
+        function downloadPDF() {
+            hidePaymentModal();
+            generatePDF();
+        }
+
+        // الدفع وتحميل PDF
+        function payAndDownload() {
+            hidePaymentModal();
+            generatePDF();
+            // فتح صفحة الدفع
+            window.open('https://hex-store.com/QzvEwqD', '_blank');
+        }
+
+        // توليد PDF
+        function generatePDF() {
+            try {
+                // التحقق من تحميل مكتبة jsPDF
+                if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined') {
+                    console.error('مكتبة jsPDF غير محملة. جاري إعادة تحميلها...');
+                    
+                    // محاولة تحميل المكتبة مرة أخرى
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+                    script.onload = function() {
+                        console.log('تم تحميل مكتبة jsPDF بنجاح. جاري إعادة المحاولة...');
+                        setTimeout(generatePDF, 500); // إعادة المحاولة بعد تحميل المكتبة
+                    };
+                    script.onerror = function() {
+                        console.error('فشل في تحميل مكتبة jsPDF');
+                        alert('حدث خطأ في تحميل مكتبة jsPDF. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+                    };
+                    document.head.appendChild(script);
+                    return;
+                }
+                
+                const element = document.getElementById('cvPreview');
+                
+                // إنشاء نسخة مؤقتة للطباعة
+                const printElement = element.cloneNode(true);
+                printElement.style.transform = 'none';
+                printElement.style.boxShadow = 'none';
+                printElement.style.borderRadius = '0';
+                printElement.style.width = '210mm';
+                printElement.style.height = '297mm';
+                printElement.style.overflow = 'hidden';
+                printElement.style.position = 'absolute';
+                printElement.style.left = '-9999px';
+                printElement.style.top = '-9999px';
+                
+                // إضافة النسخة المؤقتة للصفحة
+                document.body.appendChild(printElement);
+                
+                html2canvas(printElement, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    width: 794, // عرض A4 بالبكسل (210mm)
+                    height: 1123, // ارتفاع A4 بالبكسل (297mm)
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        // تعديل النسخة المستنسخة قبل التصوير
+                        const clonedElement = clonedDoc.getElementById('cvPreview');
+                        if (clonedElement) {
+                            // تأكد من أن الأبعاد صحيحة
+                            const aside = clonedElement.querySelector('.aside');
+                            if (aside) {
+                                aside.style.minHeight = '297mm';
+                                aside.style.height = '100%';
+                            }
+                        }
+                    }
+                }).then(function(canvas) {
+                    // إزالة النسخة المؤقتة
+                    document.body.removeChild(printElement);
+                    
+                    try {
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        
+                        // إنشاء كائن PDF
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        
+                        // إضافة الصورة كصفحة واحدة فقط
+                        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                        
+                        // حفظ الملف
+                        pdf.save('سيرتي_الذاتية.pdf');
+                    } catch (err) {
+                        console.error('خطأ في إنشاء ملف PDF:', err);
+                        alert('حدث خطأ في إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
+                    }
+                }).catch(function(error) {
+                    // إزالة النسخة المؤقتة في حالة الخطأ
+                    if (document.body.contains(printElement)) {
+                        document.body.removeChild(printElement);
+                    }
+                    console.error('خطأ في تصوير المستند:', error);
+                    alert('حدث خطأ في تصوير المستند. يرجى المحاولة مرة أخرى.');
+                });
+            } catch (error) {
+                console.error('خطأ عام في توليد PDF:', error);
+                alert('حدث خطأ غير متوقع. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+            }
+        }
+
+        // إغلاق النافذة عند النقر خارجها
+        document.getElementById('paymentModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hidePaymentModal();
+            }
+        });
+
+        // دوال قسم الترتيب
+        let sectionOrder = ['contact', 'skills', 'languages', 'hobbies', 'summary', 'experiences', 'education', 'extra'];
+        
+        let sectionLocation = {
+            contact: 'sidebar',
+            skills: 'sidebar', 
+            languages: 'sidebar',
+            hobbies: 'sidebar',
+            summary: 'main',
+            experiences: 'main',
+            education: 'main',
+            extra: 'main'
+        };
+
+        let sectionVisibility = {
+            contact: true,
+            skills: true,
+            languages: true,
+            hobbies: true,
+            summary: true,
+            experiences: true,
+            education: true,
+            extra: true,
+            header: true
+        };
+
+        // تبديل إظهار/إخفاء القسم
+        function toggleSection(sectionName, isVisible) {
+            sectionVisibility[sectionName] = isVisible;
+            updateSectionsDisplay();
+        }
+
+        // تبديل إظهار/إخفاء قسم الرأس
+        function toggleHeaderSection() {
+            const hideHeader = document.getElementById('hideHeader').checked;
+            sectionVisibility.header = !hideHeader;
+            updateSectionsDisplay();
+        }
+
+        // تحديث عرض الشريط الجانبي
+        function updateSidebarWidth() {
+            const width = document.getElementById('sidebarWidth').value;
+            document.documentElement.style.setProperty('--aside-w', width);
+        }
+
+        // تحديث عرض الأقسام
+        function updateSectionsDisplay() {
+            // تحديث ترتيب قسم الرأس
+            const headerSection = document.getElementById('headerSection');
+            if (headerSection) {
+                headerSection.style.display = sectionVisibility.header ? 'flex' : 'none';
+                headerSection.style.order = sectionVisibility.header ? '0' : '999';
+            }
+            
+            // ترتيب جميع الأقسام حسب موقعها الجديد
+            let sidebarOrder = 1;
+            let mainOrder = 0;
+            
+            sectionOrder.forEach((sectionName) => {
+                const sectionElement = getSectionElement(sectionName);
+                if (sectionElement) {
+                    // تحديد الرؤية
+                    sectionElement.style.display = sectionVisibility[sectionName] ? 'flex' : 'none';
+                    
+                    // تحديد الترتيب حسب الموقع
+                    if (sectionVisibility[sectionName]) {
+                        if (sectionLocation[sectionName] === 'sidebar') {
+                            sectionElement.style.order = sidebarOrder.toString();
+                            sidebarOrder++;
+                        } else {
+                            sectionElement.style.order = mainOrder.toString();
+                            mainOrder++;
+                        }
+                    } else {
+                        sectionElement.style.order = '999';
+                    }
+                    
+                    // نقل العنصر إلى الحاوية المناسبة
+                    const targetContainer = sectionLocation[sectionName] === 'sidebar' ? 
+                        document.querySelector('.aside') : 
+                        document.querySelector('.main');
+                    
+                    if (sectionElement.parentNode !== targetContainer) {
+                        targetContainer.appendChild(sectionElement);
+                    }
+                }
+            });
+        }
+        
+        // دالة مساعدة للحصول على عنصر القسم
+        function getSectionElement(sectionName) {
+            if (sectionName === 'summary') {
+                return document.getElementById('summarySection');
+            } else if (sectionName === 'experiences') {
+                return document.getElementById('experiencesSection');
+            } else if (sectionName === 'education') {
+                return document.getElementById('educationSection');
+            } else if (sectionName === 'extra') {
+                return document.getElementById('extraSections');
+            } else {
+                return document.getElementById(sectionName + 'Section');
+            }
+        }
+        
+        // تغيير موقع القسم
+        function changeSectionLocation(sectionName, newLocation) {
+            sectionLocation[sectionName] = newLocation;
+            updateSectionsDisplay();
+        }
+
+        // إخفاء/إظهار الأقسام
+        function toggleSection(sectionName) {
+            const sectionElement = document.getElementById(sectionName + 'Section');
+            if (sectionElement) {
+                const isHidden = sectionElement.style.display === 'none';
+                sectionElement.style.display = isHidden ? 'block' : 'none';
+            }
+        }
+
+        // إعادة تعيين ترتيب الأقسام
+        function resetSectionsOrder() {
+            sectionOrder = ['contact', 'skills', 'languages', 'hobbies', 'summary', 'experiences', 'education', 'extra'];
+            
+            sectionLocation = {
+                contact: 'sidebar',
+                skills: 'sidebar', 
+                languages: 'sidebar',
+                hobbies: 'sidebar',
+                summary: 'main',
+                experiences: 'main',
+                education: 'main',
+                extra: 'main'
+            };
+            
+            sectionVisibility = {
+                contact: true,
+                skills: true,
+                languages: true,
+                hobbies: true,
+                summary: true,
+                experiences: true,
+                education: true,
+                extra: true,
+                header: true
+            };
+            
+            // إعادة تعيين الواجهة
+            document.querySelectorAll('#allSectionsList input[type="checkbox"]').forEach(cb => cb.checked = true);
+            document.querySelectorAll('#allSectionsList select').forEach(select => {
+                const sectionName = select.closest('.chip').getAttribute('data-section');
+                select.value = sectionLocation[sectionName];
+            });
+            document.getElementById('hideHeader').checked = false;
+            document.getElementById('sidebarWidth').value = '280px';
+            
+            updateSidebarWidth();
+            updateSectionsDisplay();
+        }
+
+        // تحديث المعاينة عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePreview();
+            
+            // تحديث قيم المتزلقات
+            updateFontSizes();
+            updateSpacing();
+            updateBorders();
+            
+            // تفعيل السحب والإفلات لقائمة الأقسام الموحدة
+            new Sortable(document.getElementById('allSectionsList'), {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                onEnd: function(evt) {
+                    // تحديث ترتيب الأقسام
+                    const newOrder = [];
+                    document.querySelectorAll('#allSectionsList .chip').forEach(chip => {
+                        newOrder.push(chip.getAttribute('data-section'));
+                    });
+                    sectionOrder = newOrder;
+                    updateSectionsDisplay();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
