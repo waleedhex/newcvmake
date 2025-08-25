@@ -362,6 +362,28 @@
     .a4-container { padding: 0; }
     /* ⚠️ لا تغيّر الورقة (.a4) ولا الشبكة (.cv) هنا */
   }
+/* === إصلاحات للجوال + العربية === */
+
+/* 1) منع التكبير التلقائي عند التركيز على الحقول (iOS/Android) */
+input,
+select,
+textarea {
+  font-size: 16px !important; /* الحد الأدنى اللي يمنع الزوم */
+}
+
+/* 2) تثبيت حجم النص وعدم تغييره تلقائيًا */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* 3) منع أي تباعد بين الحروف العربية */
+[dir="rtl"], 
+[lang="ar"] {
+  letter-spacing: 0 !important;
+  word-break: normal !important;
+}
+
 </style>
     <script>
         // التأكد من تحميل مكتبة jsPDF
@@ -1033,1036 +1055,818 @@
             </div>
         </div>
     </div>
+<script>
+// ======================= البيانات العامة =======================
+let cvData = {
+  personal: { name: '', title: '', summary: '', image: '', hideImage: false },
+  contact:  { phone: '', email: '', address: '', website: '', hideWebsite: false },
+  skills: [],
+  experiences: [],
+  education: [],
+  languages: [],
+  hobbies: [],
+  extraSections: {}
+};
 
-    <script>
-        // البيانات
-        let cvData = {
-            personal: {
-                name: '',
-                title: '',
-                summary: '',
-                image: '',
-                hideImage: false
-            },
-            contact: {
-                phone: '',
-                email: '',
-                address: '',
-                website: '',
-                hideWebsite: false
-            },
-            skills: [],
-            experiences: [],
-            education: [],
-            languages: [],
-            hobbies: [],
-            extraSections: {}
-        };
+// مساعد لقيد النسبة
+function clampPercent(n){ return Math.max(0, Math.min(100, Number(n) || 0)); }
 
-        // تحديث المعاينة
-        function updatePreview() {
-            // تحديث المعلومات الشخصية
-            const name = document.getElementById('fullName').value || 'اسمك هنا';
-            const title = document.getElementById('jobTitle').value || 'المسمى الوظيفي';
-            const summary = document.getElementById('summary').value || 'اكتب نبذة مختصرة عن خبراتك ومهاراتك وأهدافك المهنية...';
-            
-            document.getElementById('previewName').textContent = name;
-            document.getElementById('previewRole').textContent = title;
-            document.getElementById('previewSummary').innerHTML = summary.replace(/\n/g, '<br>');
+// ======================= المعلومات الشخصية =======================
+function updatePreview() {
+  // الاسم/المسمى/النبذة
+  const name    = document.getElementById('fullName').value || 'اسمك هنا';
+  const title   = document.getElementById('jobTitle').value || 'المسمى الوظيفي';
+  const summary = document.getElementById('summary').value || 'اكتب نبذة مختصرة عن خبراتك ومهاراتك وأهدافك المهنية...';
 
-            // تحديث معلومات الاتصال
-            const phone = document.getElementById('phone').value || '+966 50 123 4567';
-            const email = document.getElementById('email').value || 'example@email.com';
-            const address = document.getElementById('address').value || 'الرياض، السعودية';
-            const website = document.getElementById('website').value || 'www.example.com';
-            
-            document.getElementById('previewPhone').textContent = phone;
-            document.getElementById('previewEmail').textContent = email;
-            document.getElementById('previewAddress').textContent = address;
-            document.getElementById('previewWebsite').textContent = website;
+  document.getElementById('previewName').textContent = name;
+  document.getElementById('previewRole').textContent = title;
+  document.getElementById('previewSummary').innerHTML = summary.replace(/\n/g, '<br>');
 
-            // إخفاء/إظهار الصورة
-            const hideImage = document.getElementById('hideImage').checked;
-            document.getElementById('avatarContainer').style.display = hideImage ? 'none' : 'block';
+  // الاتصال
+  const phone   = document.getElementById('phone').value   || '+966 50 123 4567';
+  const email   = document.getElementById('email').value   || 'example@email.com';
+  const address = document.getElementById('address').value || 'الرياض، السعودية';
+  const website = document.getElementById('website').value || 'www.example.com';
 
-            // إخفاء/إظهار الموقع
-            const hideWebsite = document.getElementById('hideWebsite').checked;
-            document.getElementById('websiteIcon').style.display = hideWebsite ? 'none' : 'inline';
-            document.getElementById('previewWebsite').style.display = hideWebsite ? 'none' : 'inline';
+  document.getElementById('previewPhone').textContent   = phone;
+  document.getElementById('previewEmail').textContent   = email;
+  document.getElementById('previewAddress').textContent = address;
+  document.getElementById('previewWebsite').textContent = website;
 
-            // حفظ البيانات
-            cvData.personal = { name, title, summary, hideImage };
-            cvData.contact = { phone, email, address, website, hideWebsite };
-        }
+  // إخفاء/إظهار الصورة
+  const hideImage = document.getElementById('hideImage').checked;
+  document.getElementById('avatarContainer').style.display = hideImage ? 'none' : 'block';
 
-        // رفع الصورة
-        function handleImageUpload(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('avatarImg').src = e.target.result;
-                    cvData.personal.image = e.target.result;
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+  // إخفاء/إظهار الموقع
+  const hideWebsite = document.getElementById('hideWebsite').checked;
+  document.getElementById('websiteIcon').style.display   = hideWebsite ? 'none' : 'inline';
+  document.getElementById('previewWebsite').style.display= hideWebsite ? 'none' : 'inline';
 
-        // إضافة مهارة
-        function addSkill() {
-            const name = document.getElementById('skillName').value;
-            const level = parseInt(document.getElementById('skillLevel').value);
-            const type = document.getElementById('skillType').value;
-            const color = document.getElementById('skillColor').value;
-            
-            if (!name) return;
+  // حفظ
+  cvData.personal = { name, title, summary, hideImage };
+  cvData.contact  = { phone, email, address, website, hideWebsite };
+}
 
-            const skill = { name, level, type, color, id: Date.now() };
-            cvData.skills.push(skill);
-            
-            updateSkillsList();
-            updateSkillsPreview();
-            
-            // مسح الحقول
-            document.getElementById('skillName').value = '';
-            document.getElementById('skillLevel').value = '80';
-        }
+function handleImageUpload(input){
+  if (input.files && input.files[0]){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('avatarImg').src = e.target.result;
+      cvData.personal.image = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
 
-        // حذف مهارة
-        function removeSkill(id) {
-            cvData.skills = cvData.skills.filter(skill => skill.id !== id);
-            updateSkillsList();
-            updateSkillsPreview();
-        }
+// ======================= المهارات =======================
+function addSkill(){
+  const name  = document.getElementById('skillName').value;
+  const level = parseInt(document.getElementById('skillLevel').value);
+  const type  = document.getElementById('skillType').value;
+  const color = document.getElementById('skillColor').value;
+  if(!name) return;
 
-        // تحديث قائمة المهارات
-        function updateSkillsList() {
-            const skillsList = document.getElementById('skillsList');
-            skillsList.innerHTML = '';
-            cvData.skills.forEach(skill => {
-                const skillItem = document.createElement('div');
-                skillItem.className = 'chip';
-                skillItem.innerHTML = `
-                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${skill.name} (${skill.level}%)</span>
-                    <button class="btn dan" onclick="removeSkill(${skill.id})">×</button>
-                `;
-                skillsList.appendChild(skillItem);
-            });
-            
-            // تفعيل السحب والإفلات
-            new Sortable(skillsList, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                onEnd: function(evt) {
-                    // إعادة ترتيب المصفوفة
-                    const item = cvData.skills.splice(evt.oldIndex, 1)[0];
-                    cvData.skills.splice(evt.newIndex, 0, item);
-                    updateSkillsPreview();
-                }
-            });
-        }
+  cvData.skills.push({ name, level, type, color, id: Date.now() });
+  updateSkillsList();
+  updateSkillsPreview();
 
-        // تحديث معاينة المهارات
-        function updateSkillsPreview() {
-            const skillsGrid = document.getElementById('skillsGrid');
-            skillsGrid.innerHTML = '';
-            
-            cvData.skills.forEach(skill => {
-                const skillElement = document.createElement('div');
-                skillElement.className = 'skill';
-                
-                let gauge = '';
-                const skillColor = skill.color || '#3b82f6';
-                
-                if (skill.type === 'circle') {
-                    const circumference = 2 * Math.PI * 18;
-                    const strokeDasharray = (skill.level / 100) * circumference;
-                    gauge = `
-                        <div class="gauge-container">
-                            <svg class="gauge" viewBox="0 0 40 40">
-                                <circle class="g-bg" cx="20" cy="20" r="18" stroke-width="4"/>
-                                <circle class="g-ring" cx="20" cy="20" r="18" stroke-width="4" 
-                                        stroke="${skillColor}" 
-                                        stroke-dasharray="${strokeDasharray} ${circumference}"/>
-                                <text class="g-center" x="20" y="20">${skill.level}%</text>
-                            </svg>
-                        </div>
-                    `;
-                } else if (skill.type === 'bar') {
-                    gauge = `
-                        <div class="bar">
-                            <span style="width: ${skill.level}%; background: ${skillColor};"></span>
-                        </div>
-                    `;
-                } else if (skill.type === 'stars') {
-                    const stars = Math.round(skill.level / 20);
-                    gauge = `<div class="stars" style="color: ${skillColor};">${'★'.repeat(stars)}${'☆'.repeat(5-stars)}</div>`;
-                }
-                
-                skillElement.innerHTML = `
-                    ${gauge}
-                    <div class="label">${skill.name}</div>
-                `;
-                skillsGrid.appendChild(skillElement);
-            });
-        }
+  document.getElementById('skillName').value = '';
+  document.getElementById('skillLevel').value = '80';
+}
 
-        // تحديث لون المهارات
-        function updateSkillColor() {
-            const newColor = document.getElementById('skillColor').value;
-            // تحديث لون جميع المهارات الموجودة
-            cvData.skills.forEach(skill => {
-                skill.color = newColor;
-            });
-            updateSkillsPreview();
-        }
+function removeSkill(id){
+  cvData.skills = cvData.skills.filter(s => s.id !== id);
+  updateSkillsList();
+  updateSkillsPreview();
+}
 
-        // لون المهارة حسب المستوى
-        function getSkillColor(level) {
-            if (level >= 80) return '#22c55e';
-            if (level >= 60) return '#3b82f6';
-            if (level >= 40) return '#f59e0b';
-            return '#ef4444';
-        }
+function updateSkillsList(){
+  const skillsList = document.getElementById('skillsList');
+  skillsList.innerHTML = '';
+  cvData.skills.forEach(skill => {
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = `
+      <span><i class="fas fa-grip-vertical drag-handle"></i> ${skill.name} (${skill.level}%)</span>
+      <button class="btn dan" onclick="removeSkill(${skill.id})">×</button>
+    `;
+    skillsList.appendChild(el);
+  });
 
-        // إضافة خبرة
-        function addExperience() {
-            const title = document.getElementById('expTitle').value;
-            const company = document.getElementById('expCompany').value;
-            const period = document.getElementById('expPeriod').value;
-            const description = document.getElementById('expDescription').value;
-            
-            if (!title || !company) return;
+  new Sortable(skillsList, {
+    animation:150, ghostClass:'sortable-ghost', chosenClass:'sortable-chosen', dragClass:'sortable-drag', handle:'.drag-handle',
+    onEnd: (evt) => {
+      const item = cvData.skills.splice(evt.oldIndex, 1)[0];
+      cvData.skills.splice(evt.newIndex, 0, item);
+      updateSkillsPreview();
+    }
+  });
+}
 
-            const experience = { title, company, period, description, id: Date.now() };
-            cvData.experiences.push(experience);
-            
-            updateExperiencesList();
-            updateExperiencesPreview();
-            
-            // مسح الحقول
-            document.getElementById('expTitle').value = '';
-            document.getElementById('expCompany').value = '';
-            document.getElementById('expPeriod').value = '';
-            document.getElementById('expDescription').value = '';
-        }
+// ======= المعاينة (مُصحّحة: دائرة كبيرة + نجوم SVG) =======
+function updateSkillsPreview(){
+  const skillsGrid = document.getElementById('skillsGrid');
+  skillsGrid.innerHTML = '';
 
-        // حذف خبرة
-        function removeExperience(id) {
-            cvData.experiences = cvData.experiences.filter(exp => exp.id !== id);
-            updateExperiencesList();
-            updateExperiencesPreview();
-        }
+  cvData.skills.forEach(skill => {
+    const level = clampPercent(skill.level);
+    const skillColor = skill.color || '#3b82f6';
+    let content = '';
 
-        // تحديث قائمة الخبرات
-        function updateExperiencesList() {
-            const experiencesList = document.getElementById('experiencesList');
-            experiencesList.innerHTML = '';
-            cvData.experiences.forEach(exp => {
-                const expItem = document.createElement('div');
-                expItem.className = 'chip';
-                expItem.innerHTML = `
-                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${exp.title} - ${exp.company}</span>
-                    <button class="btn dan" onclick="removeExperience(${exp.id})">×</button>
-                `;
-                experiencesList.appendChild(expItem);
-            });
-            
-            // تفعيل السحب والإفلات
-            new Sortable(experiencesList, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                onEnd: function(evt) {
-                    const item = cvData.experiences.splice(evt.oldIndex, 1)[0];
-                    cvData.experiences.splice(evt.newIndex, 0, item);
-                    updateExperiencesPreview();
-                }
-            });
-        }
+    if (skill.type === 'circle'){
+      // دائرة كبيرة 64px، النسبة داخلها فقط
+      const size = 64, radius = 28, strokeW = 5;
+      const cx = size/2, cy = size/2;
+      const circumference = 2 * Math.PI * radius;
+      const dash = (level/100) * circumference;
 
-        // تحديث معاينة الخبرات
-        function updateExperiencesPreview() {
-            const experiencesGrid = document.getElementById('experiencesGrid');
-            const layout = document.getElementById('experienceLayout').value;
-            
-            experiencesGrid.innerHTML = '';
-            experiencesGrid.className = layout === 'horizontal' ? 'grid-layout' : '';
-            
-            cvData.experiences.forEach(exp => {
-                const expElement = document.createElement('div');
-                expElement.className = layout === 'horizontal' ? 'experience-item' : '';
-                expElement.style.marginBottom = layout === 'vertical' ? '16px' : '0';
-                expElement.innerHTML = `
-                    <div style="font-weight: bold; color: var(--heading);">${exp.title}</div>
-                    <div style="color: var(--secondary); font-weight: 600;">${exp.company}</div>
-                    <div style="font-size: 12px; color: #666; margin: 4px 0;">${exp.period}</div>
-                    <div style="font-size: 13px; line-height: 1.4;">${exp.description}</div>
-                `;
-                experiencesGrid.appendChild(expElement);
-            });
-        }
+      content = `
+        <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"
+               style="display:block;flex:0 0 auto;overflow:visible" role="img" aria-hidden="true">
+            <circle cx="${cx}" cy="${cy}" r="${radius}"
+                    stroke="#e5e7eb" stroke-width="${strokeW}" fill="none"
+                    style="vector-effect:non-scaling-stroke"/>
+            <circle cx="${cx}" cy="${cy}" r="${radius}"
+                    stroke="${skillColor}" stroke-width="${strokeW}" fill="none"
+                    stroke-linecap="round"
+                    transform="rotate(-90 ${cx} ${cy})"
+                    stroke-dasharray="${dash} ${circumference}"
+                    style="vector-effect:non-scaling-stroke"/>
+            <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle"
+                  font-size="14" font-weight="700" fill="#111" style="line-height:1">${level}%</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;min-width:0">
+            <span class="label" style="font-weight:700;color:var(--heading);">${skill.name}</span>
+          </div>
+        </div>
+      `;
+    }
+    else if (skill.type === 'stars'){
+      // نجوم SVG ثابتة
+      const max = 5, filled = Math.round(level/20), starSize = 16;
+      const starPath = 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27z';
+      const star = (fill) => `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+             width="${starSize}" height="${starSize}"
+             style="display:inline-block;vertical-align:middle;margin-inline:1px">
+          <path d="${starPath}" fill="${fill}"/>
+        </svg>`;
+      const starsHtml = Array.from({length:max}, (_,i)=> star(i<filled?skillColor:'#d1d5db')).join('');
 
-        // إضافة تعليم
-        function addEducation() {
-            const degree = document.getElementById('eduDegree').value;
-            const institution = document.getElementById('eduInstitution').value;
-            const year = document.getElementById('eduYear').value;
-            
-            if (!degree || !institution) return;
+      content = `
+        <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+          <div role="img" aria-label="${filled} من ${max}">
+            ${starsHtml}
+          </div>
+          <div style="display:flex;flex-direction:column;min-width:0">
+            <span class="label" style="font-weight:700;color:var(--heading);">${skill.name}</span>
+            <span style="font-size:.85rem;color:#6b7280">${level}%</span>
+          </div>
+        </div>
+      `;
+    }
+    else { // bar
+      content = `
+        <div class="bar-container" style="display:flex;flex-direction:column;gap:.5rem;width:100%">
+          <div style="display:flex;align-items:center;justify-content:space-between;min-width:0">
+            <span class="label" style="font-weight:700;color:var(--heading);">${skill.name}</span>
+            <span style="font-size:.85rem;color:#6b7280">${level}%</span>
+          </div>
+          <div style="height:8px;background:#e5e7eb;border-radius:9999px;overflow:hidden;width:100%" aria-label="المستوى ${level}%">
+            <div style="width:${level}%;height:100%;background:${skillColor}"></div>
+          </div>
+        </div>
+      `;
+    }
 
-            const education = { degree, institution, year, id: Date.now() };
-            cvData.education.push(education);
-            
-            updateEducationList();
-            updateEducationPreview();
-            
-            // مسح الحقول
-            document.getElementById('eduDegree').value = '';
-            document.getElementById('eduInstitution').value = '';
-            document.getElementById('eduYear').value = '';
-        }
+    const skillEl = document.createElement('div');
+    skillEl.className = 'skill';
+    skillEl.innerHTML = content;
+    skillsGrid.appendChild(skillEl);
+  });
+}
 
-        // حذف تعليم
-        function removeEducation(id) {
-            cvData.education = cvData.education.filter(edu => edu.id !== id);
-            updateEducationList();
-            updateEducationPreview();
-        }
+function updateSkillColor(){
+  const newColor = document.getElementById('skillColor').value;
+  cvData.skills.forEach(s => { s.color = newColor; });
+  updateSkillsPreview();
+}
 
-        // تحديث قائمة التعليم
-        function updateEducationList() {
-            const educationList = document.getElementById('educationList');
-            educationList.innerHTML = '';
-            cvData.education.forEach(edu => {
-                const eduItem = document.createElement('div');
-                eduItem.className = 'chip';
-                eduItem.innerHTML = `
-                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${edu.degree} - ${edu.institution}</span>
-                    <button class="btn dan" onclick="removeEducation(${edu.id})">×</button>
-                `;
-                educationList.appendChild(eduItem);
-            });
-            
-            // تفعيل السحب والإفلات
-            new Sortable(educationList, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                onEnd: function(evt) {
-                    const item = cvData.education.splice(evt.oldIndex, 1)[0];
-                    cvData.education.splice(evt.newIndex, 0, item);
-                    updateEducationPreview();
-                }
-            });
-        }
+function getSkillColor(level){
+  if (level >= 80) return '#22c55e';
+  if (level >= 60) return '#3b82f6';
+  if (level >= 40) return '#f59e0b';
+  return '#ef4444';
+}
 
-        // تحديث معاينة التعليم
-        function updateEducationPreview() {
-            const educationGrid = document.getElementById('educationGrid');
-            const layout = document.getElementById('educationLayout').value;
-            
-            educationGrid.innerHTML = '';
-            educationGrid.className = layout === 'horizontal' ? 'grid-layout' : '';
-            
-            cvData.education.forEach(edu => {
-                const eduElement = document.createElement('div');
-                eduElement.className = layout === 'horizontal' ? 'education-item' : '';
-                eduElement.style.marginBottom = layout === 'vertical' ? '16px' : '0';
-                eduElement.innerHTML = `
-                    <div style="font-weight: bold; color: var(--heading);">${edu.degree}</div>
-                    <div style="color: var(--secondary); font-weight: 600;">${edu.institution}</div>
-                    <div style="font-size: 12px; color: #666; margin: 4px 0;">${edu.year}</div>
-                `;
-                educationGrid.appendChild(eduElement);
-            });
-        }
+// ======================= الخبرات =======================
+function addExperience(){
+  const title = document.getElementById('expTitle').value;
+  const company = document.getElementById('expCompany').value;
+  const period = document.getElementById('expPeriod').value;
+  const description = document.getElementById('expDescription').value;
+  if(!title || !company) return;
 
-        // إضافة لغة
-        function addLanguage() {
-            const name = document.getElementById('langName').value;
-            const level = document.getElementById('langLevel').value;
-            
-            if (!name) return;
+  cvData.experiences.push({ title, company, period, description, id: Date.now() });
+  updateExperiencesList();
+  updateExperiencesPreview();
 
-            const language = { name, level, id: Date.now() };
-            cvData.languages.push(language);
-            
-            updateLanguagesList();
-            updateLanguagesPreview();
-            
-            // مسح الحقول
-            document.getElementById('langName').value = '';
-            document.getElementById('langLevel').value = 'مبتدئ';
-        }
+  document.getElementById('expTitle').value = '';
+  document.getElementById('expCompany').value = '';
+  document.getElementById('expPeriod').value = '';
+  document.getElementById('expDescription').value = '';
+}
 
-        // حذف لغة
-        function removeLanguage(id) {
-            cvData.languages = cvData.languages.filter(lang => lang.id !== id);
-            updateLanguagesList();
-            updateLanguagesPreview();
-        }
+function removeExperience(id){
+  cvData.experiences = cvData.experiences.filter(e => e.id !== id);
+  updateExperiencesList();
+  updateExperiencesPreview();
+}
 
-        // تحديث قائمة اللغات
-        function updateLanguagesList() {
-            const languagesList = document.getElementById('languagesList');
-            languagesList.innerHTML = '';
-            cvData.languages.forEach(lang => {
-                const langItem = document.createElement('div');
-                langItem.className = 'chip';
-                langItem.innerHTML = `
-                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${lang.name} - ${lang.level}</span>
-                    <button class="btn dan" onclick="removeLanguage(${lang.id})">×</button>
-                `;
-                languagesList.appendChild(langItem);
-            });
-            
-            // تفعيل السحب والإفلات
-            new Sortable(languagesList, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                onEnd: function(evt) {
-                    const item = cvData.languages.splice(evt.oldIndex, 1)[0];
-                    cvData.languages.splice(evt.newIndex, 0, item);
-                    updateLanguagesPreview();
-                }
-            });
-        }
+function updateExperiencesList(){
+  const list = document.getElementById('experiencesList');
+  list.innerHTML = '';
+  cvData.experiences.forEach(exp => {
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = `
+      <span><i class="fas fa-grip-vertical drag-handle"></i> ${exp.title} - ${exp.company}</span>
+      <button class="btn dan" onclick="removeExperience(${exp.id})">×</button>
+    `;
+    list.appendChild(el);
+  });
 
-        // تحديث معاينة اللغات
-        function updateLanguagesPreview() {
-            const languagesGrid = document.getElementById('languagesGrid');
-            languagesGrid.innerHTML = '';
-            
-            cvData.languages.forEach(lang => {
-                const langSpan1 = document.createElement('span');
-                langSpan1.textContent = lang.name;
-                const langSpan2 = document.createElement('span');
-                langSpan2.textContent = lang.level;
-                languagesGrid.appendChild(langSpan1);
-                languagesGrid.appendChild(langSpan2);
-            });
-        }
+  new Sortable(list, {
+    animation:150, ghostClass:'sortable-ghost', chosenClass:'sortable-chosen', dragClass:'sortable-drag', handle:'.drag-handle',
+    onEnd: (evt) => {
+      const item = cvData.experiences.splice(evt.oldIndex, 1)[0];
+      cvData.experiences.splice(evt.newIndex, 0, item);
+      updateExperiencesPreview();
+    }
+  });
+}
 
-        // إضافة هواية
-        function addHobby() {
-            const name = document.getElementById('hobbyName').value;
-            const icon = document.getElementById('hobbyIcon').value;
-            const description = document.getElementById('hobbyDescription').value;
-            
-            if (!name) return;
+function updateExperiencesPreview(){
+  const grid = document.getElementById('experiencesGrid');
+  const layout = document.getElementById('experienceLayout').value;
+  grid.innerHTML = '';
+  grid.className = layout === 'horizontal' ? 'grid-layout' : '';
 
-            const hobby = { name, icon, description, id: Date.now() };
-            cvData.hobbies.push(hobby);
-            
-            updateHobbiesList();
-            updateHobbiesPreview();
-            
-            // مسح الحقول
-            document.getElementById('hobbyName').value = '';
-            document.getElementById('hobbyIcon').value = '';
-            document.getElementById('hobbyDescription').value = '';
-        }
+  cvData.experiences.forEach(exp => {
+    const el = document.createElement('div');
+    el.className = layout === 'horizontal' ? 'experience-item' : '';
+    el.style.marginBottom = layout === 'vertical' ? '16px' : '0';
+    el.innerHTML = `
+      <div style="font-weight: bold; color: var(--heading);">${exp.title}</div>
+      <div style="color: var(--secondary); font-weight: 600;">${exp.company}</div>
+      <div style="font-size: 12px; color: #666; margin: 4px 0;">${exp.period}</div>
+      <div style="font-size: 13px; line-height: 1.4;">${exp.description}</div>
+    `;
+    grid.appendChild(el);
+  });
+}
 
-        // حذف هواية
-        function removeHobby(id) {
-            cvData.hobbies = cvData.hobbies.filter(hobby => hobby.id !== id);
-            updateHobbiesList();
-            updateHobbiesPreview();
-        }
+// ======================= التعليم =======================
+function addEducation(){
+  const degree = document.getElementById('eduDegree').value;
+  const institution = document.getElementById('eduInstitution').value;
+  const year = document.getElementById('eduYear').value;
+  if(!degree || !institution) return;
 
-        // تحديث قائمة الهوايات
-        function updateHobbiesList() {
-            const hobbiesList = document.getElementById('hobbiesList');
-            hobbiesList.innerHTML = '';
-            cvData.hobbies.forEach(hobby => {
-                const hobbyItem = document.createElement('div');
-                hobbyItem.className = 'chip';
-                hobbyItem.innerHTML = `
-                    <span><i class="fas fa-grip-vertical drag-handle"></i> ${hobby.icon} ${hobby.name}</span>
-                    <button class="btn dan" onclick="removeHobby(${hobby.id})">×</button>
-                `;
-                hobbiesList.appendChild(hobbyItem);
-            });
-            
-            // تفعيل السحب والإفلات
-            new Sortable(hobbiesList, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                onEnd: function(evt) {
-                    const item = cvData.hobbies.splice(evt.oldIndex, 1)[0];
-                    cvData.hobbies.splice(evt.newIndex, 0, item);
-                    updateHobbiesPreview();
-                }
-            });
-        }
+  cvData.education.push({ degree, institution, year, id: Date.now() });
+  updateEducationList();
+  updateEducationPreview();
 
-        // تحديث معاينة الهوايات
-        function updateHobbiesPreview() {
-            const hobbiesGrid = document.getElementById('hobbiesGrid');
-            const displayType = document.getElementById('hobbiesDisplay').value;
-            
-            hobbiesGrid.innerHTML = '';
-            
-            if (displayType === 'tags') {
-                cvData.hobbies.forEach(hobby => {
-                    const hobbyElement = document.createElement('div');
-                    hobbyElement.className = 'tag';
-                    hobbyElement.innerHTML = `
-                        <span>${hobby.icon}</span>
-                        <span>${hobby.name}</span>
-                    `;
-                    hobbiesGrid.appendChild(hobbyElement);
-                });
-            } else if (displayType === 'list') {
-                const listElement = document.createElement('div');
-                listElement.className = 'kv';
-                cvData.hobbies.forEach(hobby => {
-                    const iconSpan = document.createElement('span');
-                    iconSpan.textContent = hobby.icon;
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = hobby.name;
-                    listElement.appendChild(iconSpan);
-                    listElement.appendChild(nameSpan);
-                });
-                hobbiesGrid.appendChild(listElement);
-            } else if (displayType === 'cards') {
-                hobbiesGrid.style.display = 'grid';
-                hobbiesGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(120px, 1fr))';
-                hobbiesGrid.style.gap = '8px';
-                cvData.hobbies.forEach(hobby => {
-                    const hobbyElement = document.createElement('div');
-                    hobbyElement.style.cssText = `
-                        background: #f8fafc;
-                        border: var(--card-border);
-                        border-radius: var(--card-radius);
-                        padding: var(--card-pad);
-                        text-align: center;
-                        font-size: 12px;
-                    `;
-                    hobbyElement.innerHTML = `
-                        <div style="font-size: 16px; margin-bottom: 4px;">${hobby.icon}</div>
-                        <div style="font-weight: bold; color: var(--heading);">${hobby.name}</div>
-                        ${hobby.description ? `<div style="font-size: 10px; color: #666; margin-top: 2px;">${hobby.description}</div>` : ''}
-                    `;
-                    hobbiesGrid.appendChild(hobbyElement);
-                });
-            }
-        }
+  document.getElementById('eduDegree').value = '';
+  document.getElementById('eduInstitution').value = '';
+  document.getElementById('eduYear').value = '';
+}
 
-        // إضافة بيانات إضافية
-        function addExtraData() {
-            const sectionName = document.getElementById('extraSectionName').value;
-            const title = document.getElementById('extraTitle').value;
-            const details = document.getElementById('extraDetails').value;
-            const date = document.getElementById('extraDate').value;
-            const icon = document.getElementById('extraIcon').value;
-            
-            if (!sectionName || !title) return;
+function removeEducation(id){
+  cvData.education = cvData.education.filter(e => e.id !== id);
+  updateEducationList();
+  updateEducationPreview();
+}
 
-            if (!cvData.extraSections[sectionName]) {
-                cvData.extraSections[sectionName] = [];
-            }
+function updateEducationList(){
+  const list = document.getElementById('educationList');
+  list.innerHTML = '';
+  cvData.education.forEach(edu => {
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = `
+      <span><i class="fas fa-grip-vertical drag-handle"></i> ${edu.degree} - ${edu.institution}</span>
+      <button class="btn dan" onclick="removeEducation(${edu.id})">×</button>
+    `;
+    list.appendChild(el);
+  });
 
-            const extraItem = { title, details, date, icon, id: Date.now() };
-            cvData.extraSections[sectionName].push(extraItem);
-            
-            updateExtraDataList();
-            updateExtraDataPreview();
-            
-            // مسح الحقول
-            document.getElementById('extraTitle').value = '';
-            document.getElementById('extraDetails').value = '';
-            document.getElementById('extraDate').value = '';
-            document.getElementById('extraIcon').value = '';
-        }
+  new Sortable(list, {
+    animation:150, ghostClass:'sortable-ghost', chosenClass:'sortable-chosen', dragClass:'sortable-drag', handle:'.drag-handle',
+    onEnd: (evt) => {
+      const item = cvData.education.splice(evt.oldIndex, 1)[0];
+      cvData.education.splice(evt.newIndex, 0, item);
+      updateEducationPreview();
+    }
+  });
+}
 
-        // حذف بيانات إضافية
-        function removeExtraData(sectionName, id) {
-            cvData.extraSections[sectionName] = cvData.extraSections[sectionName].filter(item => item.id !== id);
-            if (cvData.extraSections[sectionName].length === 0) {
-                delete cvData.extraSections[sectionName];
-            }
-            updateExtraDataList();
-            updateExtraDataPreview();
-        }
+function updateEducationPreview(){
+  const grid = document.getElementById('educationGrid');
+  const layout = document.getElementById('educationLayout').value;
+  grid.innerHTML = '';
+  grid.className = layout === 'horizontal' ? 'grid-layout' : '';
 
-        // تحديث قائمة البيانات الإضافية
-        function updateExtraDataList() {
-            const extraDataList = document.getElementById('extraDataList');
-            extraDataList.innerHTML = '';
-            
-            Object.keys(cvData.extraSections).forEach(sectionName => {
-                cvData.extraSections[sectionName].forEach(item => {
-                    const extraItem = document.createElement('div');
-                    extraItem.className = 'chip';
-                    extraItem.innerHTML = `
-                        <span><i class="fas fa-grip-vertical drag-handle"></i> ${sectionName}: ${item.title}</span>
-                        <button class="btn dan" onclick="removeExtraData('${sectionName}', ${item.id})">×</button>
-                    `;
-                    extraDataList.appendChild(extraItem);
-                });
-            });
-        }
+  cvData.education.forEach(edu => {
+    const el = document.createElement('div');
+    el.className = layout === 'horizontal' ? 'education-item' : '';
+    el.style.marginBottom = layout === 'vertical' ? '16px' : '0';
+    el.innerHTML = `
+      <div style="font-weight: bold; color: var(--heading);">${edu.degree}</div>
+      <div style="color: var(--secondary); font-weight: 600;">${edu.institution}</div>
+      <div style="font-size: 12px; color: #666; margin: 4px 0;">${edu.year}</div>
+    `;
+    grid.appendChild(el);
+  });
+}
 
-        // تحديث معاينة البيانات الإضافية
-        function updateExtraDataPreview() {
-            const extraSections = document.getElementById('extraSections');
-            extraSections.innerHTML = '';
-            
-            const displayType = document.getElementById('extraDataDisplay').value;
-            
-            Object.keys(cvData.extraSections).forEach(sectionName => {
-                const sectionElement = document.createElement('div');
-                sectionElement.className = 'section';
-                sectionElement.innerHTML = `<h3>${sectionName}</h3>`;
-                
-                const itemsContainer = document.createElement('div');
-                
-                // تطبيق العرض الشبكي إذا تم اختياره
-                if (displayType === 'grid') {
-                    itemsContainer.className = 'grid-layout';
-                }
-                
-                cvData.extraSections[sectionName].forEach(item => {
-                    const itemElement = document.createElement('div');
-                    
-                    if (displayType === 'grid') {
-                        itemElement.className = 'extra-data-item';
-                        itemElement.innerHTML = `
-                            <div style="font-weight: bold; color: var(--heading); margin-bottom: 8px;">
-                                ${item.icon ? item.icon + ' ' : ''}${item.title}
-                            </div>
-                            ${item.details ? `<div style="color: var(--secondary-text-color); font-size: 13px; margin-bottom: 6px;">${item.details}</div>` : ''}
-                            ${item.date ? `<div style="font-size: 11px; color: #888; font-weight: 600;">${item.date}</div>` : ''}
-                        `;
-                    } else {
-                        itemElement.style.marginBottom = '16px';
-                        itemElement.innerHTML = `
-                            <div style="font-weight: bold; color: var(--heading);">
-                                ${item.icon ? item.icon + ' ' : ''}${item.title}
-                            </div>
-                            ${item.details ? `<div style="color: var(--secondary); font-weight: 600;">${item.details}</div>` : ''}
-                            ${item.date ? `<div style="font-size: 12px; color: #666; margin: 4px 0;">${item.date}</div>` : ''}
-                        `;
-                    }
-                    
-                    itemsContainer.appendChild(itemElement);
-                });
-                
-                sectionElement.appendChild(itemsContainer);
-                extraSections.appendChild(sectionElement);
-            });
-        }
+// ======================= اللغات =======================
+function addLanguage(){
+  const name  = document.getElementById('langName').value;
+  const level = document.getElementById('langLevel').value;
+  if(!name) return;
 
-        // تطبيق لوحة الألوان
-        function applyColorPalette(primary, secondary) {
-            document.getElementById('primaryColor').value = primary;
-            document.getElementById('secondaryColor').value = secondary;
-            updateColors();
-        }
+  cvData.languages.push({ name, level, id: Date.now() });
+  updateLanguagesList();
+  updateLanguagesPreview();
 
-        // تحديث الألوان
-        function updateColors() {
-            const primary = document.getElementById('primaryColor').value;
-            const secondary = document.getElementById('secondaryColor').value;
-            
-            document.documentElement.style.setProperty('--primary', primary);
-            document.documentElement.style.setProperty('--secondary', secondary);
-        }
+  document.getElementById('langName').value = '';
+  document.getElementById('langLevel').value = 'مبتدئ';
+}
 
-        // تحديث ألوان الخطوط
-        function updateFontColors() {
-            const nameColor = document.getElementById('nameColor').value;
-            const headingColor = document.getElementById('headingColor').value;
-            const textColor = document.getElementById('textColor').value;
-            const secondaryTextColor = document.getElementById('secondaryTextColor').value;
-            
-            document.documentElement.style.setProperty('--name-color', nameColor);
-            document.documentElement.style.setProperty('--heading-color', headingColor);
-            document.documentElement.style.setProperty('--text-color', textColor);
-            document.documentElement.style.setProperty('--secondary-text-color', secondaryTextColor);
-        }
+function removeLanguage(id){
+  cvData.languages = cvData.languages.filter(l => l.id !== id);
+  updateLanguagesList();
+  updateLanguagesPreview();
+}
 
-        // تحديث نوع الخط
-        function updateFontFamily() {
-            const fontFamily = document.getElementById('fontFamily').value;
-            document.documentElement.style.setProperty('--font-body', `"${fontFamily}", sans-serif`);
-            document.documentElement.style.setProperty('--font-head', `"${fontFamily}", sans-serif`);
-            document.documentElement.style.setProperty('--font-name', `"${fontFamily}", sans-serif`);
-        }
+function updateLanguagesList(){
+  const list = document.getElementById('languagesList');
+  list.innerHTML = '';
+  cvData.languages.forEach(lang => {
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = `
+      <span><i class="fas fa-grip-vertical drag-handle"></i> ${lang.name} - ${lang.level}</span>
+      <button class="btn dan" onclick="removeLanguage(${lang.id})">×</button>
+    `;
+    list.appendChild(el);
+  });
 
-        // تحديث أحجام الخطوط
-        function updateFontSizes() {
-            const nameFont = document.getElementById('nameFont').value;
-            const headingFont = document.getElementById('headingFont').value;
-            const baseFont = document.getElementById('baseFont').value;
-            
-            document.getElementById('nameFontValue').textContent = nameFont + 'px';
-            document.getElementById('headingFontValue').textContent = headingFont + 'px';
-            document.getElementById('baseFontValue').textContent = baseFont + 'px';
-            
-            document.documentElement.style.setProperty('--name-font', nameFont + 'px');
-            document.documentElement.style.setProperty('--h3-font', headingFont + 'px');
-            document.documentElement.style.setProperty('--base-font', baseFont + 'px');
-        }
+  new Sortable(list, {
+    animation:150, ghostClass:'sortable-ghost', chosenClass:'sortable-chosen', dragClass:'sortable-drag', handle:'.drag-handle',
+    onEnd: (evt) => {
+      const item = cvData.languages.splice(evt.oldIndex, 1)[0];
+      cvData.languages.splice(evt.newIndex, 0, item);
+      updateLanguagesPreview();
+    }
+  });
+}
 
-        // تحديث التباعد
-        function updateSpacing() {
-            const sectionGap = document.getElementById('sectionGap').value;
-            const itemGap = document.getElementById('itemGap').value;
-            const cardPadding = document.getElementById('cardPadding').value;
-            
-            document.getElementById('sectionGapValue').textContent = sectionGap + 'px';
-            document.getElementById('itemGapValue').textContent = itemGap + 'px';
-            document.getElementById('cardPaddingValue').textContent = cardPadding + 'px';
-            
-            document.documentElement.style.setProperty('--section-gap', sectionGap + 'px');
-            document.documentElement.style.setProperty('--item-gap', itemGap + 'px');
-            document.documentElement.style.setProperty('--card-pad', cardPadding + 'px');
-        }
+function updateLanguagesPreview(){
+  const grid = document.getElementById('languagesGrid');
+  grid.innerHTML = '';
+  cvData.languages.forEach(lang => {
+    const a = document.createElement('span'); a.textContent = lang.name;
+    const b = document.createElement('span'); b.textContent = lang.level;
+    grid.appendChild(a); grid.appendChild(b);
+  });
+}
 
-        // تحديث الحدود
-        function updateBorders() {
-            const borderWidth = document.getElementById('borderWidth').value;
-            const borderColor = document.getElementById('borderColor').value;
-            const borderRadius = document.getElementById('borderRadius').value;
-            
-            document.getElementById('borderWidthValue').textContent = borderWidth + 'px';
-            document.getElementById('borderRadiusValue').textContent = borderRadius + 'px';
-            
-            document.documentElement.style.setProperty('--card-border', `${borderWidth}px solid ${borderColor}`);
-            document.documentElement.style.setProperty('--card-radius', borderRadius + 'px');
-        }
+// ======================= الهوايات =======================
+function addHobby(){
+  const name = document.getElementById('hobbyName').value;
+  const icon = document.getElementById('hobbyIcon').value;
+  const description = document.getElementById('hobbyDescription').value;
+  if(!name) return;
 
-        // إظهار نافذة الدفع
-        function showPaymentModal() {
-            document.getElementById('paymentModal').classList.remove('hidden');
-        }
+  cvData.hobbies.push({ name, icon, description, id: Date.now() });
+  updateHobbiesList();
+  updateHobbiesPreview();
 
-        // إخفاء نافذة الدفع
-        function hidePaymentModal() {
-            document.getElementById('paymentModal').classList.add('hidden');
-        }
+  document.getElementById('hobbyName').value = '';
+  document.getElementById('hobbyIcon').value = '';
+  document.getElementById('hobbyDescription').value = '';
+}
 
-        // تحميل PDF مجاني
-        function downloadPDF() {
-            hidePaymentModal();
-            generatePDF();
-        }
+function removeHobby(id){
+  cvData.hobbies = cvData.hobbies.filter(h => h.id !== id);
+  updateHobbiesList();
+  updateHobbiesPreview();
+}
 
-        // الدفع وتحميل PDF
-        function payAndDownload() {
-            hidePaymentModal();
-            generatePDF();
-            // فتح صفحة الدفع
-            window.open('https://hex-store.com/QzvEwqD', '_blank');
-        }
+function updateHobbiesList(){
+  const list = document.getElementById('hobbiesList');
+  list.innerHTML = '';
+  cvData.hobbies.forEach(hobby => {
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = `
+      <span><i class="fas fa-grip-vertical drag-handle"></i> ${hobby.icon} ${hobby.name}</span>
+      <button class="btn dan" onclick="removeHobby(${hobby.id})">×</button>
+    `;
+    list.appendChild(el);
+  });
 
-        // توليد PDF
-        function generatePDF() {
-            try {
-                // التحقق من تحميل مكتبة jsPDF
-                if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined') {
-                    console.error('مكتبة jsPDF غير محملة. جاري إعادة تحميلها...');
-                    
-                    // محاولة تحميل المكتبة مرة أخرى
-                    const script = document.createElement('script');
-                    script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
-                    script.onload = function() {
-                        console.log('تم تحميل مكتبة jsPDF بنجاح. جاري إعادة المحاولة...');
-                        setTimeout(generatePDF, 500); // إعادة المحاولة بعد تحميل المكتبة
-                    };
-                    script.onerror = function() {
-                        console.error('فشل في تحميل مكتبة jsPDF');
-                        alert('حدث خطأ في تحميل مكتبة jsPDF. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
-                    };
-                    document.head.appendChild(script);
-                    return;
-                }
-                
-                const element = document.getElementById('cvPreview');
-                
-                // إنشاء نسخة مؤقتة للطباعة
-                const printElement = element.cloneNode(true);
-                printElement.style.transform = 'none';
-                printElement.style.boxShadow = 'none';
-                printElement.style.borderRadius = '0';
-                printElement.style.width = '210mm';
-                printElement.style.height = '297mm';
-                printElement.style.overflow = 'hidden';
-                printElement.style.position = 'absolute';
-                printElement.style.left = '-9999px';
-                printElement.style.top = '-9999px';
-                
-                // إضافة النسخة المؤقتة للصفحة
-                document.body.appendChild(printElement);
-                
-                html2canvas(printElement, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    width: 794, // عرض A4 بالبكسل (210mm)
-                    height: 1123, // ارتفاع A4 بالبكسل (297mm)
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    onclone: function(clonedDoc) {
-                        // تعديل النسخة المستنسخة قبل التصوير
-                        const clonedElement = clonedDoc.getElementById('cvPreview');
-                        if (clonedElement) {
-                            // تأكد من أن الأبعاد صحيحة
-                            const aside = clonedElement.querySelector('.aside');
-                            if (aside) {
-                                aside.style.minHeight = '297mm';
-                                aside.style.height = '100%';
-                            }
-                        }
-                    }
-                }).then(function(canvas) {
-                    // إزالة النسخة المؤقتة
-                    document.body.removeChild(printElement);
-                    
-                    try {
-                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                        
-                        // إنشاء كائن PDF
-                        const { jsPDF } = window.jspdf;
-                        const pdf = new jsPDF('p', 'mm', 'a4');
-                        
-                        // إضافة الصورة كصفحة واحدة فقط
-                        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-                        
-                        // حفظ الملف
-                        pdf.save('سيرتي_الذاتية.pdf');
-                    } catch (err) {
-                        console.error('خطأ في إنشاء ملف PDF:', err);
-                        alert('حدث خطأ في إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
-                    }
-                }).catch(function(error) {
-                    // إزالة النسخة المؤقتة في حالة الخطأ
-                    if (document.body.contains(printElement)) {
-                        document.body.removeChild(printElement);
-                    }
-                    console.error('خطأ في تصوير المستند:', error);
-                    alert('حدث خطأ في تصوير المستند. يرجى المحاولة مرة أخرى.');
-                });
-            } catch (error) {
-                console.error('خطأ عام في توليد PDF:', error);
-                alert('حدث خطأ غير متوقع. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
-            }
-        }
+  new Sortable(list, {
+    animation:150, ghostClass:'sortable-ghost', chosenClass:'sortable-chosen', dragClass:'sortable-drag', handle:'.drag-handle',
+    onEnd: (evt) => {
+      const item = cvData.hobbies.splice(evt.oldIndex, 1)[0];
+      cvData.hobbies.splice(evt.newIndex, 0, item);
+      updateHobbiesPreview();
+    }
+  });
+}
 
-        // إغلاق النافذة عند النقر خارجها
-        document.getElementById('paymentModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                hidePaymentModal();
-            }
-        });
+function updateHobbiesPreview(){
+  const grid = document.getElementById('hobbiesGrid');
+  const displayType = document.getElementById('hobbiesDisplay').value;
+  grid.innerHTML = '';
 
-        // دوال قسم الترتيب
-        let sectionOrder = ['contact', 'skills', 'languages', 'hobbies', 'summary', 'experiences', 'education', 'extra'];
-        
-        let sectionLocation = {
-            contact: 'sidebar',
-            skills: 'sidebar', 
-            languages: 'sidebar',
-            hobbies: 'sidebar',
-            summary: 'main',
-            experiences: 'main',
-            education: 'main',
-            extra: 'main'
-        };
+  if (displayType === 'tags'){
+    cvData.hobbies.forEach(hobby => {
+      const el = document.createElement('div');
+      el.className = 'tag';
+      el.innerHTML = `<span>${hobby.icon}</span><span>${hobby.name}</span>`;
+      grid.appendChild(el);
+    });
+  } else if (displayType === 'list'){
+    const list = document.createElement('div');
+    list.className = 'kv';
+    cvData.hobbies.forEach(hobby => {
+      const i = document.createElement('span'); i.textContent = hobby.icon;
+      const n = document.createElement('span'); n.textContent = hobby.name;
+      list.appendChild(i); list.appendChild(n);
+    });
+    grid.appendChild(list);
+  } else {
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(120px, 1fr))';
+    grid.style.gap = '8px';
+    cvData.hobbies.forEach(hobby => {
+      const el = document.createElement('div');
+      el.style.cssText = `
+        background:#f8fafc;border:var(--card-border);border-radius:var(--card-radius);
+        padding:var(--card-pad);text-align:center;font-size:12px;
+      `;
+      el.innerHTML = `
+        <div style="font-size:16px;margin-bottom:4px;">${hobby.icon}</div>
+        <div style="font-weight:bold;color:var(--heading);">${hobby.name}</div>
+        ${hobby.description ? `<div style="font-size:10px;color:#666;margin-top:2px;">${hobby.description}</div>` : ''}
+      `;
+      grid.appendChild(el);
+    });
+  }
+}
 
-        let sectionVisibility = {
-            contact: true,
-            skills: true,
-            languages: true,
-            hobbies: true,
-            summary: true,
-            experiences: true,
-            education: true,
-            extra: true,
-            header: true
-        };
+// ======================= بيانات إضافية =======================
+function addExtraData(){
+  const sectionName = document.getElementById('extraSectionName').value;
+  const title   = document.getElementById('extraTitle').value;
+  const details = document.getElementById('extraDetails').value;
+  const date    = document.getElementById('extraDate').value;
+  const icon    = document.getElementById('extraIcon').value;
+  if(!sectionName || !title) return;
 
-        // تبديل إظهار/إخفاء القسم
-        function toggleSection(sectionName, isVisible) {
-            sectionVisibility[sectionName] = isVisible;
-            updateSectionsDisplay();
-        }
+  if(!cvData.extraSections[sectionName]) cvData.extraSections[sectionName] = [];
+  cvData.extraSections[sectionName].push({ title, details, date, icon, id: Date.now() });
 
-        // تبديل إظهار/إخفاء قسم الرأس
-        function toggleHeaderSection() {
-            const hideHeader = document.getElementById('hideHeader').checked;
-            sectionVisibility.header = !hideHeader;
-            updateSectionsDisplay();
-        }
+  updateExtraDataList();
+  updateExtraDataPreview();
 
-        // تحديث عرض الشريط الجانبي
-        function updateSidebarWidth() {
-            const width = document.getElementById('sidebarWidth').value;
-            document.documentElement.style.setProperty('--aside-w', width);
-        }
+  document.getElementById('extraTitle').value = '';
+  document.getElementById('extraDetails').value = '';
+  document.getElementById('extraDate').value = '';
+  document.getElementById('extraIcon').value = '';
+}
 
-        // تحديث عرض الأقسام
-        function updateSectionsDisplay() {
-            // تحديث ترتيب قسم الرأس
-            const headerSection = document.getElementById('headerSection');
-            if (headerSection) {
-                headerSection.style.display = sectionVisibility.header ? 'flex' : 'none';
-                headerSection.style.order = sectionVisibility.header ? '0' : '999';
-            }
-            
-            // ترتيب جميع الأقسام حسب موقعها الجديد
-            let sidebarOrder = 1;
-            let mainOrder = 0;
-            
-            sectionOrder.forEach((sectionName) => {
-                const sectionElement = getSectionElement(sectionName);
-                if (sectionElement) {
-                    // تحديد الرؤية
-                    sectionElement.style.display = sectionVisibility[sectionName] ? 'flex' : 'none';
-                    
-                    // تحديد الترتيب حسب الموقع
-                    if (sectionVisibility[sectionName]) {
-                        if (sectionLocation[sectionName] === 'sidebar') {
-                            sectionElement.style.order = sidebarOrder.toString();
-                            sidebarOrder++;
-                        } else {
-                            sectionElement.style.order = mainOrder.toString();
-                            mainOrder++;
-                        }
-                    } else {
-                        sectionElement.style.order = '999';
-                    }
-                    
-                    // نقل العنصر إلى الحاوية المناسبة
-                    const targetContainer = sectionLocation[sectionName] === 'sidebar' ? 
-                        document.querySelector('.aside') : 
-                        document.querySelector('.main');
-                    
-                    if (sectionElement.parentNode !== targetContainer) {
-                        targetContainer.appendChild(sectionElement);
-                    }
-                }
-            });
-        }
-        
-        // دالة مساعدة للحصول على عنصر القسم
-        function getSectionElement(sectionName) {
-            if (sectionName === 'summary') {
-                return document.getElementById('summarySection');
-            } else if (sectionName === 'experiences') {
-                return document.getElementById('experiencesSection');
-            } else if (sectionName === 'education') {
-                return document.getElementById('educationSection');
-            } else if (sectionName === 'extra') {
-                return document.getElementById('extraSections');
-            } else {
-                return document.getElementById(sectionName + 'Section');
-            }
-        }
-        
-        // تغيير موقع القسم
-        function changeSectionLocation(sectionName, newLocation) {
-            sectionLocation[sectionName] = newLocation;
-            updateSectionsDisplay();
-        }
+function removeExtraData(sectionName, id){
+  cvData.extraSections[sectionName] = cvData.extraSections[sectionName].filter(i => i.id !== id);
+  if (cvData.extraSections[sectionName].length === 0) delete cvData.extraSections[sectionName];
+  updateExtraDataList();
+  updateExtraDataPreview();
+}
 
-        // إخفاء/إظهار الأقسام
-        function toggleSection(sectionName) {
-            const sectionElement = document.getElementById(sectionName + 'Section');
-            if (sectionElement) {
-                const isHidden = sectionElement.style.display === 'none';
-                sectionElement.style.display = isHidden ? 'block' : 'none';
-            }
-        }
+function updateExtraDataList(){
+  const list = document.getElementById('extraDataList');
+  list.innerHTML = '';
+  Object.keys(cvData.extraSections).forEach(sectionName => {
+    cvData.extraSections[sectionName].forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'chip';
+      el.innerHTML = `
+        <span><i class="fas fa-grip-vertical drag-handle"></i> ${sectionName}: ${item.title}</span>
+        <button class="btn dan" onclick="removeExtraData('${sectionName}', ${item.id})">×</button>
+      `;
+      list.appendChild(el);
+    });
+  });
+}
 
-        // إعادة تعيين ترتيب الأقسام
-        function resetSectionsOrder() {
-            sectionOrder = ['contact', 'skills', 'languages', 'hobbies', 'summary', 'experiences', 'education', 'extra'];
-            
-            sectionLocation = {
-                contact: 'sidebar',
-                skills: 'sidebar', 
-                languages: 'sidebar',
-                hobbies: 'sidebar',
-                summary: 'main',
-                experiences: 'main',
-                education: 'main',
-                extra: 'main'
-            };
-            
-            sectionVisibility = {
-                contact: true,
-                skills: true,
-                languages: true,
-                hobbies: true,
-                summary: true,
-                experiences: true,
-                education: true,
-                extra: true,
-                header: true
-            };
-            
-            // إعادة تعيين الواجهة
-            document.querySelectorAll('#allSectionsList input[type="checkbox"]').forEach(cb => cb.checked = true);
-            document.querySelectorAll('#allSectionsList select').forEach(select => {
-                const sectionName = select.closest('.chip').getAttribute('data-section');
-                select.value = sectionLocation[sectionName];
-            });
-            document.getElementById('hideHeader').checked = false;
-            document.getElementById('sidebarWidth').value = '280px';
-            
-            updateSidebarWidth();
-            updateSectionsDisplay();
-        }
+function updateExtraDataPreview(){
+  const holder = document.getElementById('extraSections');
+  holder.innerHTML = '';
+  const displayType = document.getElementById('extraDataDisplay').value;
 
-        // تحديث المعاينة عند تحميل الصفحة
-        document.addEventListener('DOMContentLoaded', function() {
-            updatePreview();
-            
-            // تحديث قيم المتزلقات
-            updateFontSizes();
-            updateSpacing();
-            updateBorders();
-            
-            // تفعيل السحب والإفلات لقائمة الأقسام الموحدة
-            new Sortable(document.getElementById('allSectionsList'), {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                onEnd: function(evt) {
-                    // تحديث ترتيب الأقسام
-                    const newOrder = [];
-                    document.querySelectorAll('#allSectionsList .chip').forEach(chip => {
-                        newOrder.push(chip.getAttribute('data-section'));
-                    });
-                    sectionOrder = newOrder;
-                    updateSectionsDisplay();
-                }
-            });
-        });
+  Object.keys(cvData.extraSections).forEach(sectionName => {
+    const sectionEl = document.createElement('div');
+    sectionEl.className = 'section';
+    sectionEl.innerHTML = `<h3>${sectionName}</h3>`;
+    const items = document.createElement('div');
+    if (displayType === 'grid') items.className = 'grid-layout';
+
+    cvData.extraSections[sectionName].forEach(item => {
+      const el = document.createElement('div');
+      if (displayType === 'grid'){
+        el.className = 'extra-data-item';
+        el.innerHTML = `
+          <div style="font-weight:bold;color:var(--heading);margin-bottom:8px;">
+            ${item.icon ? item.icon + ' ' : ''}${item.title}
+          </div>
+          ${item.details ? `<div style="color:var(--secondary-text-color);font-size:13px;margin-bottom:6px;">${item.details}</div>` : ''}
+          ${item.date ? `<div style="font-size:11px;color:#888;font-weight:600;">${item.date}</div>` : ''}
+        `;
+      } else {
+        el.style.marginBottom = '16px';
+        el.innerHTML = `
+          <div style="font-weight:bold;color:var(--heading);">
+            ${item.icon ? item.icon + ' ' : ''}${item.title}
+          </div>
+          ${item.details ? `<div style="color:var(--secondary);font-weight:600;">${item.details}</div>` : ''}
+          ${item.date ? `<div style="font-size:12px;color:#666;margin:4px 0;">${item.date}</div>` : ''}
+        `;
+      }
+      items.appendChild(el);
+    });
+
+    sectionEl.appendChild(items);
+    holder.appendChild(sectionEl);
+  });
+}
+
+// ======================= تحكم الألوان والخطوط =======================
+function applyColorPalette(primary, secondary){
+  document.getElementById('primaryColor').value = primary;
+  document.getElementById('secondaryColor').value = secondary;
+  updateColors();
+}
+
+function updateColors(){
+  const primary = document.getElementById('primaryColor').value;
+  const secondary = document.getElementById('secondaryColor').value;
+  document.documentElement.style.setProperty('--primary', primary);
+  document.documentElement.style.setProperty('--secondary', secondary);
+}
+
+function updateFontColors(){
+  const nameColor = document.getElementById('nameColor').value;
+  const headingColor = document.getElementById('headingColor').value;
+  const textColor = document.getElementById('textColor').value;
+  const secondaryTextColor = document.getElementById('secondaryTextColor').value;
+  document.documentElement.style.setProperty('--name-color', nameColor);
+  document.documentElement.style.setProperty('--heading-color', headingColor);
+  document.documentElement.style.setProperty('--text-color', textColor);
+  document.documentElement.style.setProperty('--secondary-text-color', secondaryTextColor);
+}
+
+function updateFontFamily(){
+  const fontFamily = document.getElementById('fontFamily').value;
+  document.documentElement.style.setProperty('--font-body', `"${fontFamily}", sans-serif`);
+  document.documentElement.style.setProperty('--font-head', `"${fontFamily}", sans-serif`);
+  document.documentElement.style.setProperty('--font-name', `"${fontFamily}", sans-serif`);
+}
+
+function updateFontSizes(){
+  const nameFont = document.getElementById('nameFont').value;
+  const headingFont = document.getElementById('headingFont').value;
+  const baseFont = document.getElementById('baseFont').value;
+  document.getElementById('nameFontValue').textContent = nameFont + 'px';
+  document.getElementById('headingFontValue').textContent = headingFont + 'px';
+  document.getElementById('baseFontValue').textContent = baseFont + 'px';
+  document.documentElement.style.setProperty('--name-font', nameFont + 'px');
+  document.documentElement.style.setProperty('--h3-font', headingFont + 'px');
+  document.documentElement.style.setProperty('--base-font', baseFont + 'px');
+}
+
+function updateSpacing(){
+  const sectionGap = document.getElementById('sectionGap').value;
+  const itemGap    = document.getElementById('itemGap').value;
+  const cardPad    = document.getElementById('cardPadding').value;
+  document.getElementById('sectionGapValue').textContent = sectionGap + 'px';
+  document.getElementById('itemGapValue').textContent    = itemGap + 'px';
+  document.getElementById('cardPaddingValue').textContent= cardPad + 'px';
+  document.documentElement.style.setProperty('--section-gap', sectionGap + 'px');
+  document.documentElement.style.setProperty('--item-gap', itemGap + 'px');
+  document.documentElement.style.setProperty('--card-pad', cardPad + 'px');
+}
+
+function updateBorders(){
+  const bw = document.getElementById('borderWidth').value;
+  const bc = document.getElementById('borderColor').value;
+  const br = document.getElementById('borderRadius').value;
+  document.getElementById('borderWidthValue').textContent = bw + 'px';
+  document.getElementById('borderRadiusValue').textContent = br + 'px';
+  document.documentElement.style.setProperty('--card-border', `${bw}px solid ${bc}`);
+  document.documentElement.style.setProperty('--card-radius', br + 'px');
+}
+
+// ======================= PDF & الدفع =======================
+function showPaymentModal(){ document.getElementById('paymentModal').classList.remove('hidden'); }
+function hidePaymentModal(){ document.getElementById('paymentModal').classList.add('hidden'); }
+function downloadPDF(){ hidePaymentModal(); generatePDF(); }
+function payAndDownload(){ hidePaymentModal(); generatePDF(); window.open('https://hex-store.com/QzvEwqD', '_blank'); }
+
+function generatePDF(){
+  try{
+    if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined'){
+      console.error('مكتبة jsPDF غير محملة. جاري إعادة تحميلها...');
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+      script.onload = () => setTimeout(generatePDF, 500);
+      script.onerror = () => alert('فشل تحميل jsPDF. حدّث الصفحة وجرب.');
+      document.head.appendChild(script);
+      return;
+    }
+
+    const element = document.getElementById('cvPreview');
+    const printElement = element.cloneNode(true);
+    Object.assign(printElement.style, {
+      transform:'none', boxShadow:'none', borderRadius:'0',
+      width:'210mm', height:'297mm', overflow:'hidden',
+      position:'absolute', left:'-9999px', top:'-9999px'
+    });
+    document.body.appendChild(printElement);
+
+    html2canvas(printElement, {
+      scale:2, useCORS:true, allowTaint:true,
+      width:794, height:1123, backgroundColor:'#ffffff', logging:false,
+      onclone: (doc) => {
+        const aside = doc.getElementById('cvPreview')?.querySelector('.aside');
+        if (aside){ aside.style.minHeight = '297mm'; aside.style.height = '100%'; }
+      }
+    }).then(canvas => {
+      document.body.removeChild(printElement);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p','mm','a4');
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+      pdf.save('سيرتي_الذاتية.pdf');
+    }).catch(err => {
+      if (document.body.contains(printElement)) document.body.removeChild(printElement);
+      console.error('HTML2Canvas error:', err);
+      alert('حدث خطأ في تصوير المستند. حاول مرة أخرى.');
+    });
+  } catch(e){
+    console.error('PDF general error:', e);
+    alert('حدث خطأ غير متوقع. حدّث الصفحة وحاول مرة أخرى.');
+  }
+}
+
+document.getElementById('paymentModal').addEventListener('click', function(e){
+  if (e.target === this) hidePaymentModal();
+});
+
+// ======================= ترتيب الأقسام =======================
+let sectionOrder = ['contact','skills','languages','hobbies','summary','experiences','education','extra'];
+let sectionLocation = {
+  contact:'sidebar', skills:'sidebar', languages:'sidebar', hobbies:'sidebar',
+  summary:'main', experiences:'main', education:'main', extra:'main'
+};
+let sectionVisibility = {
+  contact:true, skills:true, languages:true, hobbies:true,
+  summary:true, experiences:true, education:true, extra:true, header:true
+};
+
+// دالة موحّدة تدعم النمطين: toggleSection('x', true/false) أو toggleSection('x')
+function toggleSection(sectionName, maybeVisible){
+  // نمط عناصر التحكم (قيمة Boolean)
+  if (typeof maybeVisible === 'boolean'){
+    sectionVisibility[sectionName] = maybeVisible;
+    updateSectionsDisplay();
+    return;
+  }
+  // نمط قديم: تبديل مباشر لعنصر القسم + مزامنة الرؤية
+  const sectionElement = document.getElementById(sectionName + 'Section');
+  if (sectionElement){
+    const nowHidden = sectionElement.style.display !== 'none' ? true : false;
+    sectionElement.style.display = nowHidden ? 'none' : 'flex';
+    sectionVisibility[sectionName] = !nowHidden;
+    updateSectionsDisplay();
+  }
+}
+
+function toggleHeaderSection(){
+  const hideHeader = document.getElementById('hideHeader').checked;
+  sectionVisibility.header = !hideHeader;
+  updateSectionsDisplay();
+}
+
+function updateSidebarWidth(){
+  const width = document.getElementById('sidebarWidth').value;
+  document.documentElement.style.setProperty('--aside-w', width);
+}
+
+function updateSectionsDisplay(){
+  // الرأس
+  const headerSection = document.getElementById('headerSection');
+  if (headerSection){
+    headerSection.style.display = sectionVisibility.header ? 'flex' : 'none';
+    headerSection.style.order = sectionVisibility.header ? '0' : '999';
+  }
+
+  let sidebarOrder = 1, mainOrder = 0;
+  sectionOrder.forEach(name => {
+    const el = getSectionElement(name);
+    if (!el) return;
+
+    el.style.display = sectionVisibility[name] ? 'flex' : 'none';
+    if (sectionVisibility[name]){
+      if (sectionLocation[name] === 'sidebar'){
+        el.style.order = String(sidebarOrder++); 
+      } else {
+        el.style.order = String(mainOrder++);
+      }
+    } else {
+      el.style.order = '999';
+    }
+
+    const target = sectionLocation[name] === 'sidebar' ? document.querySelector('.aside') : document.querySelector('.main');
+    if (el.parentNode !== target) target.appendChild(el);
+  });
+}
+
+function getSectionElement(name){
+  if (name === 'summary') return document.getElementById('summarySection');
+  if (name === 'experiences') return document.getElementById('experiencesSection');
+  if (name === 'education') return document.getElementById('educationSection');
+  if (name === 'extra') return document.getElementById('extraSections');
+  return document.getElementById(name + 'Section');
+}
+
+function changeSectionLocation(name, loc){
+  sectionLocation[name] = loc;
+  updateSectionsDisplay();
+}
+
+function resetSectionsOrder(){
+  sectionOrder = ['contact','skills','languages','hobbies','summary','experiences','education','extra'];
+  sectionLocation = {
+    contact:'sidebar', skills:'sidebar', languages:'sidebar', hobbies:'sidebar',
+    summary:'main', experiences:'main', education:'main', extra:'main'
+  };
+  sectionVisibility = {
+    contact:true, skills:true, languages:true, hobbies:true,
+    summary:true, experiences:true, education:true, extra:true, header:true
+  };
+
+  document.querySelectorAll('#allSectionsList input[type="checkbox"]').forEach(cb => cb.checked = true);
+  document.querySelectorAll('#allSectionsList select').forEach(sel => {
+    const sectionName = sel.closest('.chip').getAttribute('data-section');
+    sel.value = sectionLocation[sectionName];
+  });
+  document.getElementById('hideHeader').checked = false;
+  document.getElementById('sidebarWidth').value = '280px';
+
+  updateSidebarWidth();
+  updateSectionsDisplay();
+}
+
+// ======================= تهيئة وسكيل المعاينة =======================
+document.addEventListener('DOMContentLoaded', function(){
+  updatePreview();
+  updateFontSizes();
+  updateSpacing();
+  updateBorders();
+
+  new Sortable(document.getElementById('allSectionsList'), {
+    animation:150, ghostClass:'sortable-ghost', chosenClass:'sortable-chosen', dragClass:'sortable-drag', handle:'.drag-handle',
+    onEnd: function(){
+      const newOrder = [];
+      document.querySelectorAll('#allSectionsList .chip').forEach(chip => {
+        newOrder.push(chip.getAttribute('data-section'));
+      });
+      sectionOrder = newOrder;
+      updateSectionsDisplay();
+    }
+  });
+});
+
 (function(){
-  const SCALE_MIN = 10;   // %
-  const SCALE_MAX = 120;  // %
-  let manualOverride = false; // يصير true إذا المستخدم حرّك السلايدر
+  const SCALE_MIN = 10, SCALE_MAX = 120;
+  let manualOverride = false;
 
-  // helpers
   function px(v){ return isNaN(v) ? 0 : v; }
   function getPaddingX(el){
     if(!el) return 0;
@@ -2071,46 +1875,34 @@
   }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
-  // دالة السكيل (تستبدل القديمة إن وُجدت)
   window.updateScale = function(){
     const slider = document.getElementById('scaleSlider');
     const page   = document.querySelector('.a4');
     const out    = document.getElementById('scaleValue');
     if(!slider || !page) return;
-
-    const scale = Number(slider.value) / 100;
+    const scale = Number(slider.value)/100;
     page.style.transform = `scale(${scale})`;
     page.style.transformOrigin = 'top center';
-    if(out) out.textContent = Math.round(scale * 100) + '%';
+    if(out) out.textContent = Math.round(scale*100) + '%';
   };
 
-  // احسب سكيل "ملاءمة العرض" للمعاينة الحالية
   function fitToWidthOnce(){
     const preview   = document.querySelector('.preview');
     const container = document.querySelector('.a4-container');
     const page      = document.querySelector('.a4');
     const slider    = document.getElementById('scaleSlider');
     if(!preview || !page || !slider) return;
-
-    // العرض المتاح داخل المعاينة (ناقص أي حشوات)
-    let available = preview.clientWidth - getPaddingX(preview) - getPaddingX(container);
-
-    // عرض الورقة الحقيقي (غير متأثر بالـ transform)
+    const available = preview.clientWidth - getPaddingX(preview) - getPaddingX(container);
     const pageWidth = page.offsetWidth;
-
-    // نسبة السكيل (مقيدة بين 10% و 120%)
-    let scale = clamp(available / pageWidth, SCALE_MIN/100, SCALE_MAX/100);
-
-    slider.value = Math.round(scale * 100);
+    const scale = clamp(available / pageWidth, SCALE_MIN/100, SCALE_MAX/100);
+    slider.value = Math.round(scale*100);
     updateScale();
   }
 
-  // تطبيق الملاءمة تلقائيًا على الشاشات الصغيرة فقط — ما لم يغيّر المستخدم يدويًا
   function autoFitSmallScreens(){
     if (window.matchMedia('(max-width: 768px)').matches && !manualOverride){
       fitToWidthOnce();
     } else {
-      // على الديسكتوب نتركها 100% ما لم يكن المستخدم قد عدّل
       const slider = document.getElementById('scaleSlider');
       if (slider && !manualOverride){
         slider.value = 100;
@@ -2119,17 +1911,12 @@
     }
   }
 
-  // init
   window.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById('scaleSlider');
-    if (slider){
-      // أول ما يحرّك المستخدم السلايدر نوقف التلقائي لباقي الجلسة
-      slider.addEventListener('input', () => { manualOverride = true; });
-    }
+    if (slider) slider.addEventListener('input', () => { manualOverride = true; });
     autoFitSmallScreens();
   });
 
-  // إعادة الملاءمة عند تغيير حجم الشاشة (مع تأخير بسيط) طالما ما فيه تعديل يدوي
   let t;
   window.addEventListener('resize', () => {
     clearTimeout(t);
@@ -2139,4 +1926,3 @@
 </script>
 </body>
 </html>
-
