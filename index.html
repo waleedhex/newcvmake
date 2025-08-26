@@ -390,6 +390,11 @@ html {
   font-family: "Tajawal","Cairo","Noto Sans Arabic",sans-serif !important; /* خط عربي مضمون */
 }
 
+.exporting #previewSummary {
+  word-break: normal !important;
+  text-align: start !important; /* لو كنت تستخدم justify */
+}
+
 
 </style>
     <script>
@@ -1697,6 +1702,8 @@ function downloadPDF(){ hidePaymentModal(); generatePDF(); }
 function payAndDownload(){ hidePaymentModal(); generatePDF(); window.open('https://hex-store.com/QzvEwqD', '_blank'); }
 
 function generatePDF(){
+document.body.classList.add('exporting');
+
   try{
     if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined'){
       console.error('مكتبة jsPDF غير محملة. جاري إعادة تحميلها...');
@@ -1739,6 +1746,8 @@ function generatePDF(){
   } catch(e){
     console.error('PDF general error:', e);
     alert('حدث خطأ غير متوقع. حدّث الصفحة وحاول مرة أخرى.');
+    document.body.classList.remove('exporting');
+
   }
 }
 
