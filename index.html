@@ -1080,7 +1080,7 @@ function updatePreview() {
 
   document.getElementById('previewName').textContent = name;
   document.getElementById('previewRole').textContent = title;
-  document.getElementById('previewSummary').innerHTML = summary.replace(/\n/g, '<br>');
+  document.getElementById('previewSummary').textContent = summary;
 
   // الاتصال
   const phone   = document.getElementById('phone').value   || '+966 50 123 4567';
