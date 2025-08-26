@@ -383,6 +383,13 @@ html {
   letter-spacing: 0 !important;
   word-break: normal !important;
 }
+#previewSummary {
+  word-break: normal !important;     /* يمنع تقطيع العربية */
+  overflow-wrap: anywhere;           /* يلف السطر إذا ضاق بدون ما يفصل الحروف */
+  letter-spacing: 0 !important;      /* يمنع أي تباعد إضافي */
+  font-family: "Tajawal","Cairo","Noto Sans Arabic",sans-serif !important; /* خط عربي مضمون */
+}
+
 
 </style>
     <script>
@@ -1013,7 +1020,8 @@ html {
                         <!-- النبذة الشخصية -->
                         <div class="section" id="summarySection">
                             <h3>النبذة الشخصية</h3>
-                            <div class="summary" id="previewSummary" style="white-space: pre-wrap; word-break: break-word; color: var(--text-color);">
+<div class="summary" id="previewSummary"
+     style="white-space: pre-wrap; color: var(--text-color);">
                                 اكتب نبذة مختصرة عن خبراتك ومهاراتك وأهدافك المهنية...
                             </div>
                         </div>
