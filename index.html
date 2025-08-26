@@ -385,9 +385,13 @@ html {
 }
 #previewSummary {
   word-break: normal !important;     /* يمنع تقطيع العربية */
-  overflow-wrap: anywhere;           /* يلف السطر إذا ضاق بدون ما يفصل الحروف */
+  overflow-wrap: break-word;         /* يلف السطر إذا ضاق مع الحفاظ على اتصال الحروف */
   letter-spacing: 0 !important;      /* يمنع أي تباعد إضافي */
-  font-family: "Tajawal","Cairo","Noto Sans Arabic",sans-serif !important; /* خط عربي مضمون */
+  font-family: "Tajawal","Cairo","Noto Sans Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important; /* خط عربي مضمون مع fallback للجوال */
+direction: rtl !important;         /* ضمان الكتابة من اليمين إلى اليسار */
+text-align: right !important;      /* محاذاة النص إلى اليمين */
+overflow-wrap: break-word !important; /* منع التقطيع في التصدير */
+white-space: pre-line !important;     /* لف طبيعي في PDF */
 }
 
 .exporting #previewSummary {
@@ -1025,9 +1029,7 @@ html {
                         <!-- النبذة الشخصية -->
                         <div class="section" id="summarySection">
                             <h3>النبذة الشخصية</h3>
-<div class="summary" id="previewSummary"
-     style="white-space: pre-wrap; color: var(--text-color);">
-                                اكتب نبذة مختصرة عن خبراتك ومهاراتك وأهدافك المهنية...
+<div class="summary" id="previewSummary" style="white-space: pre-line; color: var(--text-color);">                                اكتب نبذة مختصرة عن خبراتك ومهاراتك وأهدافك المهنية...
                             </div>
                         </div>
 
@@ -1094,6 +1096,7 @@ function updatePreview() {
   document.getElementById('previewName').textContent = name;
   document.getElementById('previewRole').textContent = title;
   document.getElementById('previewSummary').textContent = summary;
+document.getElementById('previewSummary').style.whiteSpace = 'pre-line';
 
   // الاتصال
   const phone   = document.getElementById('phone').value   || '+966 50 123 4567';
